@@ -1,0 +1,19 @@
+@import url('https://fonts.googleapis.com/css2?family=Onest:wght@100..900&display=swap');
+@import "tailwindcss";
+
+:root {
+  --font-onest: 'Onest', sans-serif;
+}
+
+.herobg {
+  background-image: url('/imgs/herobg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  padding: 5px;
+  margin: 5px;
+}
+
+body {
+  scroll-behavior: smooth;
+}
