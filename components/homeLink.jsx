@@ -2,7 +2,7 @@ import Link from 'next/link'
 import React from 'react'
 export default function HomeLink({ link, label, link2, label2 }) {
     return (
-        <div className="flex items-center max-w-[1400px] mx-auto gap-x-2 p-4 lg:p-6">
+        <div className="flex items-center max-w-[1400px] mx-auto gap-x-2 p-4 lg:p-6 max-md:text-wrap max-md:flex-wrap">
             <Link href={'/'}>
                 <div
 

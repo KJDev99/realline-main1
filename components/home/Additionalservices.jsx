@@ -36,14 +36,12 @@ function ServiceCard({ service, delay, router }) {
                 position: 'relative',
                 borderRadius: 20,
                 overflow: 'hidden',
-                height: 450,
-                flex: 1,
-                minWidth: 0,
                 cursor: 'pointer',
                 transform: visible ? 'translateY(0)' : 'translateY(60px)',
                 opacity: visible ? 1 : 0,
                 transition: 'transform 0.6s cubic-bezier(0.22,1,0.36,1), opacity 0.6s ease',
             }}
+            className="service-card"
         >
             {/* BG image */}
             <div style={{
@@ -71,7 +69,7 @@ function ServiceCard({ service, delay, router }) {
                     {service.title}
                 </h3>
 
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
+                <div className='max-md:justify-start' style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
                     <button
                         className="md-hover-btn"
                         style={{
@@ -92,7 +90,7 @@ function ServiceCard({ service, delay, router }) {
                     </button>
                 </div>
 
-                <p style={{ fontWeight: 400, fontSize: 16, lineHeight: '100%', color: '#fff', maxWidth: 258 }}>
+                <p className='max-md:line-clamp-2' style={{ fontWeight: 400, fontSize: 16, lineHeight: '100%', color: '#fff', maxWidth: 258 }}>
                     {service.body}
                 </p>
             </div>
@@ -102,9 +100,7 @@ function ServiceCard({ service, delay, router }) {
 
 function SkeletonCard() {
     return (
-        <div style={{
-            flex: 1,
-            height: 450,
+        <div className="service-card" style={{
             borderRadius: 20,
             background: '#E5E7EB',
             animation: 'pulse 1.4s ease-in-out infinite',
@@ -128,17 +124,24 @@ export default function AdditionalServices() {
         <>
             <style>{`
                 @keyframes pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+
+                .service-card { height: 450px; }
+                .md-hover-btn { opacity: 0; }
+
                 @media (max-width: 767px) {
+                    .service-card { height: 226px !important; }
                     .md-hover-btn { opacity: 1 !important; transform: scale(1) !important; }
-                    .services-row { flex-direction: column !important; }
-                    .services-row > div { height: 340px !important; }
+                    .services-row { grid-template-columns: 1fr !important; }
                 }
             `}</style>
 
             <section className="w-full bg-white py-12 px-5 md:px-10 mb-13 max-w-350 mx-auto">
                 <h2 className="text-gray-900 text-3xl font-light mb-8">Дополнительные услуги</h2>
 
-                <div className="services-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+                <div
+                    className="services-row"
+                    style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}
+                >
                     {loading
                         ? Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
                         : services.slice(0, 4).map((service, i) => (

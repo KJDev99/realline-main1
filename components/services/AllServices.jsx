@@ -7,58 +7,11 @@ import { getData } from '@/lib/apiService';
 
 function SkeletonCard() {
     return (
-        <div style={{
-            flex: 1,
-            height: 450,
+        <div className="all-service-card" style={{
             borderRadius: 20,
             background: '#E5E7EB',
             animation: 'pulse 1.4s ease-in-out infinite',
         }} />
-    );
-}
-
-export default function AllServices() {
-    const router = useRouter();
-    const [services, setServices] = useState([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        getData('/site/services/')
-            .then((data) => setServices(Array.isArray(data) ? data : data.results ?? []))
-            .catch((err) => console.error('Ошибка загрузки услуг:', err))
-            .finally(() => setLoading(false));
-    }, []);
-
-    return (
-        <>
-            <style>{`
-                @keyframes pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
-                @media (max-width: 767px) {
-                    .all-services-grid > div {
-                        height: 340px !important;
-                    }
-                }
-            `}</style>
-
-            <div className="max-w-[1400px] mx-auto px-5 pb-10">
-                <h2 style={{ fontSize: 28, fontWeight: 400, color: '#111827', margin: '0 0 32px' }}>
-                    Все услуги
-                </h2>
-
-                <div className="all-services-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-                    {loading
-                        ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
-                        : services.map((service, i) => (
-                            <ServiceCard key={service.id} service={service} delay={i * 100} router={router} />
-                        ))
-                    }
-                </div>
-
-                {!loading && services.length === 0 && (
-                    <p style={{ color: '#9CA3AF', textAlign: 'center', marginTop: 60 }}>Услуги не найдены</p>
-                )}
-            </div>
-        </>
     );
 }
 
@@ -86,6 +39,7 @@ function ServiceCard({ service, delay, router }) {
     return (
         <div
             ref={cardRef}
+            className="all-service-card"
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
             onClick={() => router.push(`/services/${service.id}`)}
@@ -93,9 +47,6 @@ function ServiceCard({ service, delay, router }) {
                 position: 'relative',
                 borderRadius: 20,
                 overflow: 'hidden',
-                height: 450,
-                flex: '1 1 calc(33.333% - 12px)',
-                minWidth: '280px',
                 cursor: 'pointer',
                 transform: visible ? 'translateY(0)' : 'translateY(60px)',
                 opacity: visible ? 1 : 0,
@@ -130,7 +81,7 @@ function ServiceCard({ service, delay, router }) {
 
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
                     <button
-                        className="md-hover-btn"
+                        className="svc-hover-btn"
                         style={{
                             background: 'linear-gradient(90deg, #F05D22 0%, #DF3505 35.22%, #F13F03 68.86%, #F94A0B 100%)',
                             color: '#fff', border: 'none', borderRadius: 999,
@@ -149,10 +100,67 @@ function ServiceCard({ service, delay, router }) {
                     </button>
                 </div>
 
-                <p style={{ fontWeight: 400, fontSize: 16, lineHeight: '100%', color: '#fff', maxWidth: 258 }}>
+                <p className='max-md:line-clamp-2' style={{ fontWeight: 400, fontSize: 16, lineHeight: '100%', color: '#fff', maxWidth: 258 }}>
                     {service.body}
                 </p>
             </div>
         </div>
+    );
+}
+
+export default function AllServices() {
+    const router = useRouter();
+    const [services, setServices] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        getData('/site/services/')
+            .then((data) => setServices(Array.isArray(data) ? data : data.results ?? []))
+            .catch((err) => console.error('Ошибка загрузки услуг:', err))
+            .finally(() => setLoading(false));
+    }, []);
+
+    return (
+        <>
+            <style>{`
+                @keyframes pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+
+                .all-service-card { height: 450px; }
+                .svc-hover-btn { opacity: 0; }
+
+                @media (max-width: 767px) {
+                    .all-service-card { height: 226px !important; }
+                    .svc-hover-btn { opacity: 1 !important; transform: scale(1) !important; }
+                    .all-services-grid { grid-template-columns: 1fr !important; }
+                }
+
+                @media (min-width: 768px) and (max-width: 1023px) {
+                    .all-services-grid { grid-template-columns: repeat(2, 1fr) !important; }
+                    .all-service-card { height: 360px !important; }
+                }
+            `}</style>
+
+            <div className="max-w-[1400px] mx-auto px-5 pb-10">
+                <h2 style={{ fontSize: 28, fontWeight: 400, color: '#111827', margin: '0 0 32px' }}>
+                    Все услуги
+                </h2>
+
+                <div
+                    className="all-services-grid"
+                    style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}
+                >
+                    {loading
+                        ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
+                        : services.map((service, i) => (
+                            <ServiceCard key={service.id} service={service} delay={i * 100} router={router} />
+                        ))
+                    }
+                </div>
+
+                {!loading && services.length === 0 && (
+                    <p style={{ color: '#9CA3AF', textAlign: 'center', marginTop: 60 }}>Услуги не найдены</p>
+                )}
+            </div>
+        </>
     );
 }

@@ -71,7 +71,7 @@ export default function ContactForm() {
                         и проконсультируем по всем вопросам
                     </p>
 
-                    <div className="flex flex-col gap-3 max-w-[500px] w-full">
+                    <div className="flex flex-col gap-3  w-full">
                         <input
                             type="text"
                             placeholder="Ваше Имя"
@@ -146,7 +146,7 @@ export default function ContactForm() {
                 {/* RIGHT IMAGE */}
                 <div className="
                     relative
-                    lg:w-[762px]
+                    lg:w-[55%]
                     h-[355px] sm:h-[300px] md:h-[400px] lg:h-auto
                     shrink-0
                     m-[4px]

@@ -38,11 +38,7 @@ export default function ReviewsDetail() {
                     Отзывы наших клиентов
                 </h2>
 
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(4, 1fr)',
-                    gap: 16,
-                }}>
+                <div className='max-md:grid-cols-1 grid grid-cols-4 gap-4' >
                     {loading
                         ? Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)
                         : reviews.map((review) => (

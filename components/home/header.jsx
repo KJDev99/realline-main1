@@ -5,6 +5,7 @@ import Link from 'next/link';
 import React, { useRef, useEffect, useState } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, EffectFade } from 'swiper/modules';
+import { FiChevronDown, FiMenu, FiX, FiMapPin } from 'react-icons/fi';
 import useApiStore from '@/store/useApiStore';
 import { useRouter } from 'next/navigation';
 
@@ -20,6 +21,11 @@ const navLinks = [
     { label: 'Контакты', href: '/contacts' },
 ];
 
+const CITIES = [
+    { label: 'Москва', value: 'moscow' },
+    { label: 'Санкт-Петербург', value: 'spb' },
+];
+
 export default function Header() {
     const router = useRouter();
     const swiperRef = useRef(null);
@@ -28,11 +34,16 @@ export default function Header() {
     const [categories, setCategories] = useState([]);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
+    const [selectedCity, setSelectedCity] = useState(CITIES[0]);
+
     const dropdownRef = useRef(null);
     const buttonRef = useRef(null);
+    const cityDropdownRef = useRef(null);
+    const cityButtonRef = useRef(null);
 
     useEffect(() => {
-        // Check if user is authenticated
         const token = localStorage.getItem('access_token');
         setIsAuthenticated(!!token);
 
@@ -43,7 +54,6 @@ export default function Header() {
             })
             .catch(() => { });
 
-        // Load categories for dropdown
         getData('accounts/catalog/categories/')
             .then((data) => {
                 const sorted = (Array.isArray(data) ? data : data.results ?? [])
@@ -53,7 +63,7 @@ export default function Header() {
             .catch(() => { });
     }, []);
 
-    // Tashqariga bosilganda yopish
+    // Close real-estate dropdown on outside click
     useEffect(() => {
         const handleClickOutside = (e) => {
             if (dropdownRef.current && !dropdownRef.current.contains(e.target) &&
@@ -65,13 +75,27 @@ export default function Header() {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    // Close city dropdown on outside click
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (cityDropdownRef.current && !cityDropdownRef.current.contains(e.target) &&
+                cityButtonRef.current && !cityButtonRef.current.contains(e.target)) {
+                setCityDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     const handleCategoryClick = (categoryId) => {
         setDropdownOpen(false);
+        setMobileMenuOpen(false);
         router.push(`/catalog?category=${categoryId}&offset=0`);
     };
 
     const handleAllClick = () => {
         setDropdownOpen(false);
+        setMobileMenuOpen(false);
         router.push('/catalog?offset=0');
     };
 
@@ -84,8 +108,13 @@ export default function Header() {
     };
 
     return (
-        <div className="herobg rounded-[20px] w-[calc(100%-10px)] h-[995px] lg:h-[750px] overflow-visible relative flex justify-between">
-            <div className="p-4 lg:p-6 z-10">
+        <div className="herobg rounded-[20px] w-[calc(100%-10px)] overflow-hidden relative flex max-md:flex-col max-md:h-max"
+            style={{ height: '100vh', minHeight: '600px' }}>
+
+            {/* ===== LEFT SIDE (55%) ===== */}
+            <div className="relative z-10 flex flex-col w-full lg:w-[55%] h-full p-4 lg:p-6">
+
+                {/* Top row: logo + desktop nav */}
                 <div className="flex items-center gap-x-10">
                     <Link href={'/'}>
                         <Image
@@ -96,22 +125,25 @@ export default function Header() {
                             className="w-[196px] h-8 shrink-0"
                         />
                     </Link>
-                    <nav className="flex items-center gap-x-5 flex-wrap hidden lg:flex">
+
+                    {/* Desktop nav */}
+                    <nav className="hidden lg:flex items-center gap-x-5 flex-wrap">
                         {navLinks.map((link) => (
                             link.hasDropdown ? (
                                 <div key={link.label} className="relative">
                                     <button
                                         ref={buttonRef}
                                         onClick={() => setDropdownOpen((prev) => !prev)}
-                                        className="text-white/80 hover:text-white flex items-center gap-1 font-normal text-[14px] leading-[100%] tracking-[0%] align-middle bg-transparent border-none cursor-pointer"
+                                        className="text-white/80 hover:text-white flex items-center gap-1 font-normal text-[14px] leading-[100%] tracking-[0%] bg-transparent border-none cursor-pointer"
                                     >
                                         {link.label}
-                                        <svg
-                                            width="10" height="6" viewBox="0 0 10 6" fill="none"
-                                            style={{ transition: 'transform 0.2s', transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
-                                        >
-                                            <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
+                                        <FiChevronDown
+                                            size={14}
+                                            style={{
+                                                transition: 'transform 0.2s',
+                                                transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)'
+                                            }}
+                                        />
                                     </button>
 
                                     {dropdownOpen && (
@@ -143,9 +175,7 @@ export default function Header() {
                                             >
                                                 Все категории
                                             </button>
-
                                             <div style={{ height: 1, background: '#F0F0F0', margin: '4px 0' }} />
-
                                             {categories.map((cat) => (
                                                 <button
                                                     key={cat.id}
@@ -168,13 +198,22 @@ export default function Header() {
                                 <Link
                                     key={link.label}
                                     href={link.href}
-                                    className="text-white/80 hover:text-white flex items-center font-normal text-[14px] leading-[100%] tracking-[0%] align-middle"
+                                    className="text-white/80 hover:text-white flex items-center font-normal text-[14px] leading-[100%] tracking-[0%]"
                                 >
                                     {link.label}
                                 </Link>
                             )
                         ))}
                     </nav>
+
+                    {/* Mobile burger */}
+                    <button
+                        className="lg:hidden ml-auto text-white p-1"
+                        onClick={() => setMobileMenuOpen(true)}
+                        aria-label="Open menu"
+                    >
+                        <FiMenu size={28} />
+                    </button>
                 </div>
 
                 {/* Slide thumbnails */}
@@ -203,13 +242,14 @@ export default function Header() {
                     ))}
                 </div>
 
+                {/* Title / subtitle / CTA */}
                 <div className="ml-0 lg:ml-[38px]">
                     {slides.length > 0 ? (
                         <>
-                            <h1 className="font-normal text-[26px] lg:text-[36px] mt-[31px] leading-[100%] tracking-[0%] align-middle text-white">
+                            <h1 className="font-normal text-[26px] lg:text-[36px] mt-[31px] leading-[110%] text-white">
                                 {slides[0].title}
                             </h1>
-                            <p className="font-normal text-[14px] lg:text-[16px] leading-[100%] tracking-[0%] align-middle text-[gray] mt-[26px]">
+                            <p className="font-normal text-[14px] lg:text-[16px] leading-[100%] text-[gray] mt-[26px]">
                                 {slides[0].subtitle}
                             </p>
                         </>
@@ -227,26 +267,86 @@ export default function Header() {
                 </div>
             </div>
 
-            <div className="absolute right-0 top-0 w-[375px] lg:w-[620px] h-full rounded-[20px] overflow-hidden flex justify-end">
-                <div className="absolute hidden lg:flex top-0 left-0 right-0 z-20 flex items-center justify-end gap-2 p-4">
-                    <div className="flex items-center gap-1 text-white text-sm">
-                        Москва
-                        <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
-                            <path d="M1 1L5 5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
+            {/* ===== RIGHT SIDE (45%) — SLIDER ===== */}
+            <div className="lg:absolute right-0 top-0 w-[45%] max-md:w-full h-full rounded-[20px] overflow-hidden">
+
+                {/* Top action bar */}
+                <div className="max-md:hidden absolute top-0 left-0 right-0 z-20 flex items-center justify-end gap-2 p-4">
+                    {/* City Selector */}
+                    <div className="relative">
+                        <button
+                            ref={cityButtonRef}
+                            onClick={() => setCityDropdownOpen((prev) => !prev)}
+                            className="flex items-center gap-1 text-[#141111] text-sm bg-white/70 backdrop-blur-md rounded-full px-3 py-[10px] hover:bg-white/80 transition cursor-pointer border border-white/20"
+                        >
+                            <FiMapPin size={13} />
+                            {selectedCity.label}
+                            <FiChevronDown
+                                size={12}
+                                style={{
+                                    transition: 'transform 0.2s',
+                                    transform: cityDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)'
+                                }}
+                            />
+                        </button>
+
+                        {cityDropdownOpen && (
+                            <div
+                                ref={cityDropdownRef}
+                                style={{
+                                    position: 'absolute',
+                                    top: 'calc(100% + 8px)',
+                                    right: 0,
+                                    background: '#fff',
+                                    borderRadius: 12,
+                                    boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+                                    minWidth: 200,
+                                    zIndex: 9999,
+                                    padding: '6px 0',
+                                    border: '1px solid #F0F0F0',
+                                }}
+                            >
+                                {CITIES.map((city) => (
+                                    <button
+                                        key={city.value}
+                                        onClick={() => {
+                                            setSelectedCity(city);
+                                            setCityDropdownOpen(false);
+                                        }}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 8,
+                                            width: '100%',
+                                            textAlign: 'left',
+                                            padding: '10px 16px',
+                                            fontSize: 14,
+                                            color: selectedCity.value === city.value ? '#141111' : '#141111',
+                                            fontWeight: selectedCity.value === city.value ? 600 : 400,
+                                            background: 'none',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                        }}
+                                        onMouseEnter={e => e.currentTarget.style.background = '#F9FAFB'}
+                                        onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                                    >
+                                        <FiMapPin size={13} color={selectedCity.value === city.value ? '#F05D22' : '#9CA3AF'} />
+                                        {city.label}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </div>
-                    <button className="bg-white backdrop-blur-md rounded-full p-[10px] font-normal text-[14px] leading-[100%] tracking-[0%] align-middle transition">
+
+                    <button className="bg-white backdrop-blur-md rounded-full p-[10px] font-normal text-[14px] leading-[100%] transition">
                         Tg
                     </button>
-                    <button className="bg-white text-black font-normal text-[14px] px-5 py-[10px] leading-[100%] tracking-[0%] align-middle rounded-full hover:bg-white/90 transition">
-                        <a href="#contact">
-
-                            Получить консультацию
-                        </a>
+                    <button className="bg-white text-black font-normal text-[14px] px-5 py-[10px] rounded-full hover:bg-white/90 transition">
+                        <a href="#contact">Получить консультацию</a>
                     </button>
                     <button
                         onClick={handleAgentClick}
-                        className="bg-white backdrop-blur-md rounded-full px-5 py-[10px] font-normal text-[14px] leading-[100%] tracking-[0%] align-middle transition cursor-pointer"
+                        className="bg-white backdrop-blur-md rounded-full px-5 py-[10px] font-normal text-[14px] transition cursor-pointer"
                     >
                         {isAuthenticated ? 'Профиль' : 'Агентам'}
                     </button>
@@ -262,7 +362,7 @@ export default function Header() {
                     </Link>
                 </div>
 
-                {/* SWIPER */}
+                {/* Swiper */}
                 {slides.length > 0 && (
                     <Swiper
                         modules={[Autoplay, EffectFade]}
@@ -271,7 +371,7 @@ export default function Header() {
                         loop
                         speed={800}
                         onSwiper={(swiper) => { swiperRef.current = swiper; }}
-                        className="w-[375px] lg:w-[620px] h-[448px] lg:h-[calc(100%_-_10px)] ml-auto my-135 lg:my-1 absolute right-1 flex justify-end rounded-[20px]"
+                        className="w-full h-full"
                     >
                         {slides.map((slide, i) => (
                             <SwiperSlide key={slide.id} className="relative">
@@ -309,9 +409,157 @@ export default function Header() {
                 )}
 
                 {slides.length === 0 && (
-                    <div className="w-[375px] lg:w-[620px] h-[448px] lg:h-[calc(100%_-_10px)] absolute right-1 rounded-[20px] bg-white/10 animate-pulse" />
+                    <div className="w-full h-full bg-white/10 animate-pulse" />
                 )}
             </div>
+
+            {/* ===== MOBILE FULLSCREEN MENU ===== */}
+            {mobileMenuOpen && (
+                <div
+                    className="fixed inset-0 z-50 bg-[#1a1a1a] flex flex-col"
+                    style={{ minHeight: '100dvh' }}
+                >
+                    {/* Mobile menu header */}
+                    <div className="flex items-center justify-between p-4">
+                        <Link href={'/'} onClick={() => setMobileMenuOpen(false)}>
+                            <Image src="/icons/logo.svg" alt="logo" width={160} height={28} />
+                        </Link>
+                        <button
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="text-white p-1"
+                            aria-label="Close menu"
+                        >
+                            <FiX size={28} />
+                        </button>
+                    </div>
+
+                    {/* Mobile nav links */}
+                    <nav className="flex flex-col px-6 pt-6 gap-1 flex-1 overflow-y-auto">
+                        {/* Real estate with inline subcategories */}
+                        <div>
+                            <button
+                                onClick={() => setDropdownOpen((prev) => !prev)}
+                                className="flex items-center justify-between w-full text-white text-[18px] font-medium py-3 border-b border-white/10"
+                            >
+                                Недвижимость
+                                <FiChevronDown
+                                    size={18}
+                                    style={{
+                                        transition: 'transform 0.2s',
+                                        transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)'
+                                    }}
+                                />
+                            </button>
+
+                            {dropdownOpen && (
+                                <div className="flex flex-col pl-4 py-2 gap-1">
+                                    <button
+                                        onClick={handleAllClick}
+                                        className="text-left text-white/80 text-[15px] py-2 font-medium hover:text-white transition"
+                                    >
+                                        Все категории
+                                    </button>
+                                    {categories.map((cat) => (
+                                        <button
+                                            key={cat.id}
+                                            onClick={() => handleCategoryClick(cat.id)}
+                                            className="text-left text-white/60 text-[15px] py-2 hover:text-white transition"
+                                        >
+                                            {cat.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {navLinks.filter(l => !l.hasDropdown).map((link) => (
+                            <Link
+                                key={link.label}
+                                href={link.href}
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="text-white text-[18px] font-medium py-3 border-b border-white/10 hover:text-white/70 transition"
+                            >
+                                {link.label}
+                            </Link>
+                        ))}
+                    </nav>
+
+                    {/* Mobile bottom actions */}
+                    <div className="p-6 flex flex-col gap-3">
+                        {/* City selector — mobile */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setCityDropdownOpen((prev) => !prev)}
+                                className="flex items-center gap-2 text-white text-sm bg-white/10 rounded-full px-4 py-3 w-full hover:bg-white/20 transition border border-white/20"
+                            >
+                                <FiMapPin size={15} />
+                                {selectedCity.label}
+                                <FiChevronDown
+                                    size={14}
+                                    className="ml-auto"
+                                    style={{
+                                        transition: 'transform 0.2s',
+                                        transform: cityDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)'
+                                    }}
+                                />
+                            </button>
+
+                            {cityDropdownOpen && (
+                                <div
+                                    className="absolute bottom-full left-0 right-0 mb-2 rounded-xl overflow-hidden border border-white/10"
+                                    style={{ background: '#2a2a2a' }}
+                                >
+                                    {CITIES.map((city) => (
+                                        <button
+                                            key={city.value}
+                                            onClick={() => {
+                                                setSelectedCity(city);
+                                                setCityDropdownOpen(false);
+                                            }}
+                                            className="flex items-center gap-3 w-full text-left px-4 py-3 text-[15px] hover:bg-white/10 transition"
+                                            style={{
+                                                color: selectedCity.value === city.value ? '#F05D22' : '#e5e7eb',
+                                                fontWeight: selectedCity.value === city.value ? 600 : 400,
+                                            }}
+                                        >
+                                            <FiMapPin size={14} color={selectedCity.value === city.value ? '#F05D22' : '#9CA3AF'} />
+                                            {city.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex gap-2">
+                            <button className="bg-white text-black font-medium text-[14px] px-5 py-3 rounded-full hover:bg-white/90 transition flex-1">
+                                <a href="#contact">Получить консультацию</a>
+                            </button>
+                            <button className="bg-white/90 text-black font-medium text-[14px] px-5 py-3 rounded-full hover:bg-white/20 transition border border-white/20">
+                                Tg
+                            </button>
+                        </div>
+
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => { handleAgentClick(); setMobileMenuOpen(false); }}
+                                className="bg-white/90 text-black font-medium text-[14px] px-5 py-3 rounded-full hover:bg-white/20 transition border border-white/20 flex-1"
+                            >
+                                {isAuthenticated ? 'Профиль' : 'Агентам'}
+                            </button>
+                            <Link href={'/favorite'} onClick={() => setMobileMenuOpen(false)}>
+                                <button className="flex justify-center items-center w-[46px] h-[46px] rounded-full bg-white/90 border border-white/20">
+                                    <Image src="/icons/1.svg" width={20} height={18} alt="icon1" />
+                                </button>
+                            </Link>
+                            <Link href={'/compare'} onClick={() => setMobileMenuOpen(false)}>
+                                <button className="flex justify-center items-center w-[46px] h-[46px] rounded-full bg-white/90 border border-white/20">
+                                    <Image src="/icons/2.svg" width={20} height={18} alt="icon2" />
+                                </button>
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

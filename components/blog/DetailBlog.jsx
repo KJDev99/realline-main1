@@ -56,8 +56,8 @@ export default function DetailBlog() {
                 ) : (
                     <div style={{ marginTop: 24, maxWidth: 1400 }}>
                         {/* Title + date row */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 20 }}>
-                            <h1 style={{ fontSize: 32, fontWeight: 400, color: '#111827', margin: 0, lineHeight: 1.2 }}>
+                        <div className='max-md:flex-col' style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 20 }}>
+                            <h1 className='max-md:leading-[110%] max-md:text-[26px] text-[32px]' style={{ fontWeight: 400, color: '#141111', margin: 0, lineHeight: 1.2 }}>
                                 {article.title}
                             </h1>
                             <span style={{ fontSize: 14, color: '#9CA3AF', whiteSpace: 'nowrap', marginTop: 6 }}>

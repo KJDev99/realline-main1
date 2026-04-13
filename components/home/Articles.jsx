@@ -18,8 +18,8 @@ function formatDate(dateStr) {
 
 function CardSkeleton() {
     return (
-        <div style={{ flexShrink: 0, width: CARD_W }}>
-            <div style={{ width: '100%', height: 280, borderRadius: 16, background: '#E5E7EB', marginBottom: 16, animation: 'pulse 1.4s ease-in-out infinite' }} />
+        <div className="articles-card" style={{ flexShrink: 0, width: CARD_W }}>
+            <div style={{ width: '100%', borderRadius: 16, background: '#E5E7EB', marginBottom: 16, animation: 'pulse 1.4s ease-in-out infinite' }} className="articles-card-img" />
             <div style={{ height: 20, background: '#E5E7EB', borderRadius: 6, marginBottom: 10, width: '80%', animation: 'pulse 1.4s ease-in-out infinite' }} />
             <div style={{ height: 14, background: '#E5E7EB', borderRadius: 6, width: '60%', animation: 'pulse 1.4s ease-in-out infinite' }} />
         </div>
@@ -45,18 +45,32 @@ export default function Articles() {
 
     return (
         <>
-            <style>{`@keyframes pulse { 0%,100%{opacity:.5} 50%{opacity:1} }`}</style>
+            <style>{`
+                @keyframes pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+
+                .articles-card-img { height: 280px; }
+                .articles-card-title { font-size: 20px; }
+                .articles-header-title { font-size: 28px; font-weight: 400; color: #111827; margin: 0; }
+
+                @media (max-width: 767px) {
+                    .articles-header-title { font-size: 20px !important; }
+                    .articles-card { width: 75vw !important; }
+                    .articles-card-img { height: 180px !important; }
+                    .articles-card-title { font-size: 15px !important; }
+                }
+            `}</style>
+
             <section className="w-full bg-white py-12 px-5 md:px-10 max-w-350 mx-auto">
                 {/* Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                    <h2 style={{ fontSize: 28, fontWeight: 400, color: '#111827', margin: 0 }}>
+                    <h2 className="articles-header-title">
                         Полезные статьи о недвижимости
                     </h2>
-                    <Link href="/blog">
+                    <Link href="/blog" className='max-md:hidden'>
                         <button style={{
                             background: 'none', border: 'none',
                             fontSize: 14, color: '#9CA3AF',
-                            cursor: 'pointer', padding: 0,
+                            cursor: 'pointer', padding: 0, whiteSpace: 'nowrap', marginLeft: 12,
                         }}>
                             Смотреть все
                         </button>
@@ -80,11 +94,15 @@ export default function Articles() {
                         : articles.map((article) => (
                             <div
                                 key={article.id}
+                                className="articles-card"
                                 style={{ flexShrink: 0, width: CARD_W, cursor: 'pointer' }}
                                 onClick={() => router.push(`/blog/${article.slug}`)}
                             >
                                 {/* Image */}
-                                <div style={{ position: 'relative', width: '100%', height: 280, borderRadius: 16, overflow: 'hidden', marginBottom: 16 }}>
+                                <div className="articles-card-img" style={{
+                                    position: 'relative', width: '100%',
+                                    borderRadius: 16, overflow: 'hidden', marginBottom: 16,
+                                }}>
                                     <Image
                                         src={article.image || '/sec5.png'}
                                         alt={article.title}
@@ -98,7 +116,7 @@ export default function Articles() {
                                         WebkitBackdropFilter: 'blur(8px)',
                                         borderRadius: 999,
                                         padding: '6px 14px',
-                                        fontSize: 14,
+                                        fontSize: 13,
                                         color: '#fff',
                                         fontWeight: 400,
                                     }}>
@@ -107,10 +125,10 @@ export default function Articles() {
                                 </div>
 
                                 {/* Text */}
-                                <h3 style={{ fontSize: 20, fontWeight: 600, color: '#111827', margin: '0 0 6px' }}>
+                                <h3 className="articles-card-title" style={{ fontWeight: 600, color: '#111827', margin: '0 0 6px' }}>
                                     {article.title}
                                 </h3>
-                                <p style={{ fontSize: 14, color: '#9CA3AF', margin: 0 }}>
+                                <p style={{ fontSize: 13, color: '#9CA3AF', margin: 0 }}>
                                     {article.description}
                                 </p>
                             </div>

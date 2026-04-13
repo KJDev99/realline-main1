@@ -53,10 +53,10 @@ export default function ServicesDetail() {
                         {/* ── HERO ── */}
                         <HomeLink link="/services" label="Услуги" link2={`/services/${service?.id}`} label2={service?.title} />
 
-                        <div className='px-4' style={{ display: 'flex', gap: 48, flexWrap: 'wrap', marginTop: 24, marginBottom: 64, alignItems: 'flex-start' }}>
+                        <div className='px-4 mt-6 max-md:mt-3]' style={{ display: 'flex', gap: 48, flexWrap: 'wrap', marginBottom: 64, alignItems: 'flex-start' }}>
                             {/* Left */}
                             <div style={{ flex: 1, minWidth: 280 }}>
-                                <h1 style={{ fontSize: 36, fontWeight: 400, color: '#111827', margin: '0 0 20px', lineHeight: 1.2 }}>
+                                <h1 className=' max-md:text-[26px] text-[36px] mb-5 max-md:mb-3' style={{ fontWeight: 400, color: '#111827', lineHeight: 1.2 }}>
                                     {service.title}
                                 </h1>
                                 <p style={{ fontSize: 15, color: '#6B7280', lineHeight: 1.7, margin: '0 0 12px' }}>
@@ -87,7 +87,7 @@ export default function ServicesDetail() {
                         </div>
 
                         {/* ── ЧТО ВЫ ПОЛУЧИТЕ ── */}
-                        <div style={{ display: 'flex', gap: 48, flexWrap: 'wrap', marginBottom: 64 }}>
+                        <div className='max-md:px-4' style={{ display: 'flex', gap: 48, flexWrap: 'wrap', marginBottom: 64 }}>
                             {/* Left — feature lines */}
                             <div style={{ flex: 1, minWidth: 260 }}>
                                 <h2 style={{ fontSize: 24, fontWeight: 400, color: '#111827', margin: '0 0 24px' }}>

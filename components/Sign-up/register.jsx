@@ -40,7 +40,7 @@ export default function Register() {
                 personal_data_consent: form.personal_data_consent,
             })
 
-            toast.success('Заявка успешно отправлена!')
+            toast.success('Отправлено на модерацию для проверки. С вами свяжутся!')
             setSuccess(true)
         } catch (err) {
             toast.error(err.message || 'Произошла ошибка. Попробуйте снова')

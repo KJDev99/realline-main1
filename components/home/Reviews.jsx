@@ -69,7 +69,6 @@ export default function Reviews() {
                 .review-card {
                     flex-shrink: 0;
                     width: 306px;
-                    /* fixed height so all cards are equal */
                     height: 200px;
                     opacity: 0;
                     transform: translateX(60px);
@@ -92,6 +91,42 @@ export default function Reviews() {
                     justify-content: space-between;
                 }
 
+                .reviews-title {
+                    font-weight: 400;
+                    font-size: 30px;
+                    line-height: 100%;
+                    color: white;
+                    position: absolute;
+                    top: 100px;
+                    left: 67px;
+                    z-index: 20;
+                }
+
+                .reviews-all-btn {
+                    z-index: 20;
+                    position: absolute;
+                    top: 100px;
+                    right: 67px;
+                    font-size: 14px;
+                    color: white;
+                    width: 132px;
+                    height: 38px;
+                    border-radius: 999px;
+                    backdrop-filter: blur(10px);
+                    background: rgba(255,255,255,0.15);
+                    border: none;
+                    cursor: pointer;
+                }
+
+                .reviews-arrows {
+                    position: absolute;
+                    bottom: 100px;
+                    right: 67px;
+                    z-index: 10;
+                    display: flex;
+                    gap: 8px;
+                }
+
                 .review-skeleton {
                     background: rgba(255,255,255,0.06);
                     border-radius: 12px;
@@ -100,6 +135,53 @@ export default function Reviews() {
                 @keyframes pulse {
                     0%, 100% { opacity: 0.4; }
                     50% { opacity: 0.8; }
+                }
+
+                /* ── MOBILE ── */
+                @media (max-width: 767px) {
+                    .reviews-outer {
+                        height: 411px !important;
+                        width: 100% !important;
+                        border-radius: 16px;
+                    }
+
+                    .reviews-title {
+                        font-size: 18px !important;
+                        top: 24px !important;
+                        left: 16px !important;
+                        right: 16px;
+                    }
+
+                    .reviews-all-btn {
+                        top: 24px !important;
+                        right: 16px !important;
+                        width: 110px !important;
+                        height: 32px !important;
+                        font-size: 12px !important;
+                    }
+
+                    .reviews-scroll-row {
+                        padding: 70px 16px 0 16px !important;
+                        gap: 12px !important;
+                        align-items: center !important;
+                        height: 100% !important;
+                        box-sizing: border-box;
+                    }
+
+                    .review-card {
+                        width: 240px !important;
+                        height: 170px !important;
+                    }
+
+                    .review-card-inner {
+                        padding: 16px !important;
+                        border-radius: 12px !important;
+                    }
+
+                    .reviews-arrows {
+                        bottom: 20px !important;
+                        right: 16px !important;
+                    }
                 }
             `}</style>
 
@@ -111,14 +193,8 @@ export default function Reviews() {
                     </div>
 
                     {/* Header */}
-                    <div>
-                        <h2 className="z-20 top-[100px] left-[67px] font-normal text-[30px] leading-[100%] tracking-[0%] text-white absolute">
-                            Отзывы наших клиентов
-                        </h2>
-                        <button className="z-20 absolute top-[100px] right-[67px] text-[14px] text-white w-[132px] h-[38px] rounded-full backdrop-blur-[10px]">
-                            Смотреть все
-                        </button>
-                    </div>
+                    <h2 className="reviews-title">Отзывы наших клиентов</h2>
+                    <button className="reviews-all-btn">Смотреть все</button>
 
                     {/* Cards */}
                     <div ref={scrollRef} className="reviews-scroll-row" style={{ position: 'relative', zIndex: 5 }}>
@@ -138,10 +214,15 @@ export default function Reviews() {
                             : reviews.map((review, i) => (
                                 <div key={review.id} className={`review-card ${animated ? 'visible' : ''}`}>
                                     <div className="review-card-inner">
-                                        <p className="font-normal text-[14px] leading-[100%] tracking-[0%] text-white/70">
+                                        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: '100%' }}>
                                             {review.author_name}{review.city ? `, ${review.city}` : ''}
                                         </p>
-                                        <p className="font-normal text-[16px] leading-[150%] tracking-[0%] text-white mt-[15px] flex-1 overflow-hidden" style={{
+                                        <p style={{
+                                            fontSize: 14,
+                                            lineHeight: '150%',
+                                            color: 'white',
+                                            marginTop: 12,
+                                            flex: 1,
                                             display: '-webkit-box',
                                             WebkitLineClamp: 5,
                                             WebkitBoxOrient: 'vertical',
@@ -155,11 +236,8 @@ export default function Reviews() {
                         }
                     </div>
 
-                    {/* Bottom arrows */}
-                    <div style={{
-                        position: 'absolute', bottom: 100, right: 67, zIndex: 10,
-                        display: 'flex', gap: 8,
-                    }}>
+                    {/* Arrows */}
+                    <div className="reviews-arrows">
                         {[{ dir: -1, Icon: FiArrowLeft }, { dir: 1, Icon: FiArrowRight }].map(({ dir, Icon }) => (
                             <button
                                 key={dir}
