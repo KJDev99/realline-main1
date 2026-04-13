@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import { FaEye, FaEyeSlash } from 'react-icons/fa'
 import axios from 'axios'
 import toast, { Toaster } from 'react-hot-toast'
+import { useRouter } from 'next/navigation'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || ''
 
@@ -50,8 +51,10 @@ const inputVariants = {
 }
 
 export default function ProfilAgent() {
+    const router = useRouter()
     const [showPassword1, setShowPassword1] = useState(false)
     const [showPassword2, setShowPassword2] = useState(false)
+    const [showLogoutDialog, setShowLogoutDialog] = useState(false)
 
     const [profile, setProfile] = useState({
         full_name: '',
@@ -156,14 +159,59 @@ export default function ProfilAgent() {
         }
     }
 
+    // ─── Выход из системы ─────────────────────────────────────────────────────
+    const handleLogout = () => {
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('refresh_token')
+
+        // Показываем сообщение об успешном выходе
+        toast.success('Вы успешно вышли из системы')
+
+        setShowLogoutDialog(false)
+
+        setTimeout(() => {
+            router.push('/')
+        }, 1000)
+    }
+
     return (
         <motion.div
             initial='hidden'
             animate='visible'
             className='max-w-7xl m-auto mt-[30px] max-sm:px-4 space-y-6'
         >
+            <Toaster position="top-right" />
+
+            {/* Диалоговое окно подтверждения выхода */}
+            {showLogoutDialog && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        className="bg-white rounded-[20px] p-6 max-w-md mx-4"
+                    >
+                        <h3 className="text-xl font-semibold mb-4 text-[#141111]">Выход из системы</h3>
+                        <p className="text-gray-600 mb-6">Вы действительно хотите выйти из системы?</p>
+                        <div className="flex gap-4 justify-end">
+                            <button
+                                onClick={() => setShowLogoutDialog(false)}
+                                className="px-6 py-2 border border-gray-300 rounded-[10px] text-gray-700 hover:bg-gray-50 transition-colors"
+                            >
+                                Отмена
+                            </button>
+                            <button
+                                onClick={handleLogout}
+                                className="px-6 py-2 bg-red-600 text-white rounded-[10px] hover:bg-red-700 transition-colors"
+                            >
+                                Выйти
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
+
             {/* Строка 1: имя / телефон / почта */}
-            <Toaster />
             <motion.div
                 variants={inputVariants}
                 custom={0}
@@ -292,17 +340,29 @@ export default function ProfilAgent() {
                 </div>
             </motion.div>
 
-            {/* Кнопка смены пароля */}
-            <motion.div variants={inputVariants} custom={5} className='flex'>
-                <button
-                    onClick={handlePasswordSave}
-                    disabled={loadingPassword}
-                    className='h-[48px] px-8 bg-[#141111] text-white rounded-[10px] text-[14px] font-medium
+            {/* Кнопки: Изменить пароль и Выход */}
+            <div className="flex justify-between items-center">
+                <motion.div variants={inputVariants} custom={5} className='flex'>
+                    <button
+                        onClick={handlePasswordSave}
+                        disabled={loadingPassword}
+                        className='h-[48px] px-8 bg-[#141111] text-white rounded-[10px] text-[14px] font-medium
                                hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed'
-                >
-                    {loadingPassword ? 'Сохранение...' : 'Изменить пароль'}
-                </button>
-            </motion.div>
+                    >
+                        {loadingPassword ? 'Сохранение...' : 'Изменить пароль'}
+                    </button>
+                </motion.div>
+
+                <motion.div variants={inputVariants} custom={5} className='flex'>
+                    <button
+                        onClick={() => setShowLogoutDialog(true)}
+                        className='h-[48px] px-8 bg-red-600 text-white rounded-[10px] text-[14px] font-medium
+                               hover:bg-red-700 transition-colors'
+                    >
+                        Выйти
+                    </button>
+                </motion.div>
+            </div>
         </motion.div>
     )
 }

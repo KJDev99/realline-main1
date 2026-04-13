@@ -113,6 +113,86 @@ function isLandPlot(categories, selectedCategoryId) {
     return cat?.slug === 'land_plot';
 }
 
+// ─── SearchableSelect component ───────────────────────────────────────────────
+function SearchableSelect({ label, value, onChange, options, placeholder, className = '' }) {
+    const [open, setOpen] = useState(false)
+    const [search, setSearch] = useState('')
+    const ref = useRef(null)
+
+    useEffect(() => {
+        const handler = (e) => {
+            if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+        }
+        document.addEventListener('mousedown', handler)
+        return () => document.removeEventListener('mousedown', handler)
+    }, [])
+
+    useEffect(() => {
+        if (open) {
+            setTimeout(() => ref.current?.querySelector('input')?.focus(), 40)
+        } else {
+            setSearch('')
+        }
+    }, [open])
+
+    const selected = options.find(o => String(o.value) === String(value))
+
+    const filtered = options.filter(o =>
+        o.label.toLowerCase().includes(search.toLowerCase())
+    )
+
+    return (
+        <div className={`flex flex-col gap-2 ${className}`} ref={ref}>
+            {label && <p className='text-[13px] md:text-[14px]'>{label}</p>}
+            <div className='relative'>
+                <button
+                    type='button'
+                    onClick={() => setOpen(p => !p)}
+                    className='w-full h-[48px] md:h-[56px] bg-[#F4F5F5] rounded-[10px] px-4 md:px-6 flex items-center justify-between text-[14px] md:text-[16px] outline-none text-left'
+                >
+                    <span className={selected ? 'text-[#141111]' : 'text-[#aaa]'}>
+                        {selected ? selected.label : placeholder}
+                    </span>
+                    <svg
+                        width='12' height='7' viewBox='0 0 12 7' fill='none'
+                        className={`transition-transform flex-shrink-0 ${open ? 'rotate-180' : ''}`}
+                    >
+                        <path d='M1 1L6 6L11 1' stroke='#999' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round' />
+                    </svg>
+                </button>
+
+                {open && (
+                    <div className='absolute z-50 w-full mt-1 bg-white border border-[#E5E5E5] rounded-[10px] shadow-md overflow-hidden'>
+                        <div className='px-3 py-2 border-b border-[#E5E5E5]'>
+                            <input
+                                type='text'
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                placeholder='Поиск...'
+                                className='w-full bg-[#F4F5F5] rounded-[8px] px-3 py-[6px] text-[13px] outline-none'
+                            />
+                        </div>
+                        <div className='max-h-[200px] overflow-y-auto'>
+                            {filtered.length > 0 ? filtered.map(opt => (
+                                <div
+                                    key={opt.value}
+                                    onClick={() => { onChange(opt.value); setOpen(false) }}
+                                    className={`px-4 py-[10px] text-[14px] cursor-pointer hover:bg-[#F4F5F5]
+                                        ${String(opt.value) === String(value) ? 'font-semibold text-[#141111]' : 'text-[#444]'}`}
+                                >
+                                    {opt.label}
+                                </div>
+                            )) : (
+                                <div className='px-4 py-3 text-[13px] text-[#999]'>Результаты не найдены.</div>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    )
+}
+
 // ─── Inner component (uses useSearchParams) ───────────────────────────────────
 function CatalogInner() {
     const router = useRouter();
@@ -218,42 +298,58 @@ function CatalogInner() {
 
                 {/* FILTERS */}
                 <div className="flex flex-col md:flex-row flex-wrap gap-4 md:gap-6 mb-4">
-                    <div className="relative w-full sm:w-[48%] md:w-[240px]">
-                        <p className="text-[13px] md:text-[14px] mb-2">Тип недвижимости:</p>
-                        <select value={filters.category} onChange={e => handleFilterChange('category', e.target.value)}
-                            className="w-full h-[48px] md:h-[56px] bg-[#F4F5F5] px-4 md:px-6 rounded-[10px] text-[14px] md:text-[16px] outline-none appearance-none cursor-pointer">
-                            <option value="">Все типы</option>
-                            {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-                        </select>
-                        <div className="absolute right-4 md:right-6 top-[42px] md:top-[52px] -translate-y-1/2 pointer-events-none"><SelectIcon /></div>
-                    </div>
 
-                    <div className="relative w-full sm:w-[48%] md:w-[240px]">
-                        <p className="text-[13px] md:text-[14px] mb-2">Выберите район:</p>
-                        <select value={filters.district} onChange={e => handleFilterChange('district', e.target.value)}
-                            className="w-full h-[48px] md:h-[56px] bg-[#F4F5F5] px-4 md:px-6 rounded-[10px] text-[14px] md:text-[16px] outline-none appearance-none cursor-pointer">
-                            <option value="">Все районы</option>
-                            {districts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                        </select>
-                        <div className="absolute right-4 md:right-6 top-[42px] md:top-[52px] -translate-y-1/2 pointer-events-none"><SelectIcon /></div>
-                    </div>
+                    <SearchableSelect
+                        label='Тип недвижимости:'
+                        value={filters.category}
+                        onChange={v => handleFilterChange('category', v)}
+                        options={[
+                            { value: '', label: 'Все типы' },
+                            ...categories.map(c => ({ value: c.id, label: c.name }))
+                        ]}
+                        placeholder='Все типы'
+                        className='w-full sm:w-[48%] md:w-[240px]'
+                    />
 
-                    <div className="relative hidden md:block w-full sm:w-[48%] md:w-[240px]">
-                        <p className="text-[13px] md:text-[14px] mb-2">Выберите шоссе:</p>
-                        <select value={filters.highway} onChange={e => handleFilterChange('highway', e.target.value)}
-                            className="w-full h-[48px] md:h-[56px] bg-[#F4F5F5] px-4 md:px-6 rounded-[10px] text-[14px] md:text-[16px] outline-none appearance-none cursor-pointer">
-                            <option value="">Все шоссе</option>
-                            {highways.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
-                        </select>
-                        <div className="absolute right-4 md:right-6 top-[42px] md:top-[52px] -translate-y-1/2 pointer-events-none"><SelectIcon /></div>
-                    </div>
+                    <SearchableSelect
+                        label='Выберите район:'
+                        value={filters.district}
+                        onChange={v => handleFilterChange('district', v)}
+                        options={[
+                            { value: '', label: 'Все районы' },
+                            ...districts.map(d => ({ value: d.id, label: d.name }))
+                        ]}
+                        placeholder='Все районы'
+                        className='w-full sm:w-[48%] md:w-[240px]'
+                    />
 
+                    <SearchableSelect
+                        label='Выберите шоссе:'
+                        value={filters.highway}
+                        onChange={v => handleFilterChange('highway', v)}
+                        options={[
+                            { value: '', label: 'Все шоссе' },
+                            ...highways.map(h => ({ value: h.id, label: h.name }))
+                        ]}
+                        placeholder='Все шоссе'
+                        className='hidden md:flex w-full sm:w-[48%] md:w-[240px]'
+                    />
+
+                    {/* Площадь — faqat lg da ko'rinadi */}
                     <div className="hidden lg:flex flex-col w-full sm:w-[48%] md:w-auto">
-                        <p className="text-[13px] md:text-[14px] mb-2">{landPlotSelected ? 'Площадь участка, сот.:' : 'Площадь, м²:'}</p>
+                        <p className="text-[13px] md:text-[14px] mb-2">
+                            {landPlotSelected ? 'Площадь участка, сот.:' : 'Площадь, м²:'}
+                        </p>
                         <div className="flex gap-3 mt-auto">
-                            <select value={landPlotSelected ? filters.land_area_max : filters.area_max}
-                                onChange={e => { const key = landPlotSelected ? 'land_area_max' : 'area_max'; const next = { ...filters, [key]: e.target.value }; setFilters(next); pushFilters(next); }}
-                                className="w-[130px] h-[48px] md:h-[56px] bg-[#F4F5F5] px-4 rounded-[10px] text-[14px] md:text-[16px] outline-none appearance-none cursor-pointer">
+                            <select
+                                value={landPlotSelected ? filters.land_area_max : filters.area_max}
+                                onChange={e => {
+                                    const key = landPlotSelected ? 'land_area_max' : 'area_max'
+                                    const next = { ...filters, [key]: e.target.value }
+                                    setFilters(next); pushFilters(next)
+                                }}
+                                className="w-[130px] h-[48px] md:h-[56px] bg-[#F4F5F5] px-4 rounded-[10px] text-[14px] md:text-[16px] outline-none appearance-none cursor-pointer"
+                            >
                                 <option value="">До</option>
                                 {landPlotSelected
                                     ? [6, 10, 15, 20, 30, 50].map(v => <option key={v} value={v}>До {v} сот.</option>)
@@ -262,6 +358,7 @@ function CatalogInner() {
                         </div>
                     </div>
 
+                    {/* Стоимость */}
                     <div className="hidden lg:flex flex-col w-full sm:w-[48%] md:w-auto">
                         <p className="text-[13px] md:text-[14px] mb-2">Стоимость:</p>
                         <div className="flex gap-3 mt-auto">

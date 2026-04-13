@@ -15,15 +15,33 @@ function getAuthHeaders() {
 // ─── Reusable Select ──────────────────────────────────────────────────────────
 function Select({ label, value, onChange, options, placeholder }) {
     const [open, setOpen] = useState(false)
+    const [search, setSearch] = useState('')
     const ref = useRef(null)
 
     useEffect(() => {
-        const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+        const handler = (e) => {
+            if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+        }
         document.addEventListener('mousedown', handler)
         return () => document.removeEventListener('mousedown', handler)
     }, [])
 
+    // Dropdown ochilganda search inputga focus
+    useEffect(() => {
+        if (open) {
+            setTimeout(() => {
+                ref.current?.querySelector('input')?.focus()
+            }, 50)
+        } else {
+            setSearch('')
+        }
+    }, [open])
+
     const selected = options.find(o => o.value === value)
+
+    const filtered = options.filter(o =>
+        o.label.toLowerCase().includes(search.toLowerCase())
+    )
 
     return (
         <span className='flex flex-col gap-2 w-full'>
@@ -39,24 +57,45 @@ function Select({ label, value, onChange, options, placeholder }) {
                     </span>
                     <FaChevronDown size={14} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
                 </button>
+
                 {open && (
-                    <div className='absolute z-50 w-full mt-1 bg-white border border-[#E5E5E5] rounded-[10px] shadow-lg max-h-[220px] overflow-y-auto'>
-                        {options.map(opt => (
-                            <div
-                                key={opt.value}
-                                onClick={() => { onChange(opt.value); setOpen(false) }}
-                                className={`px-5 py-3 text-[14px] cursor-pointer hover:bg-[#F4F5F5] ${opt.value === value ? 'font-semibold text-[#141111]' : 'text-[#444]'}`}
-                            >
-                                {opt.label}
-                            </div>
-                        ))}
+                    <div className='absolute z-50 w-full mt-1 bg-white border border-[#E5E5E5] rounded-[10px] shadow-lg'>
+                        {/* Search input */}
+                        <div className='px-3 py-2 border-b border-[#E5E5E5]'>
+                            <input
+                                type='text'
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                placeholder='Поиск...'
+                                className='w-full outline-none bg-[#F4F5F5] rounded-[8px] px-3 py-2 text-[13px]'
+                            />
+                        </div>
+
+                        {/* Options list */}
+                        <div className='max-h-[200px] overflow-y-auto'>
+                            {filtered.length > 0 ? (
+                                filtered.map(opt => (
+                                    <div
+                                        key={opt.value}
+                                        onClick={() => { onChange(opt.value); setOpen(false) }}
+                                        className={`px-5 py-3 text-[14px] cursor-pointer hover:bg-[#F4F5F5] 
+                                            ${opt.value === value ? 'font-semibold text-[#141111]' : 'text-[#444]'}`}
+                                    >
+                                        {opt.label}
+                                    </div>
+                                ))
+                            ) : (
+                                <div className='px-5 py-4 text-[13px] text-[#999]'>
+                                    Результаты не найдены.
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
             </div>
         </span>
     )
 }
-
 // ─── Reusable Field ───────────────────────────────────────────────────────────
 function Field({ label, name, type = 'text', placeholder, value, onChange, className = '' }) {
     return (
