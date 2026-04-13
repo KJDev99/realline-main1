@@ -29,6 +29,7 @@ export default function Navbar() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
     const [selectedCity, setSelectedCity] = useState(CITIES[0]);
+    const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false); // Mobile uchun alohida state
 
     const dropdownRef = useRef(null);
     const buttonRef = useRef(null);
@@ -48,7 +49,7 @@ export default function Navbar() {
             .catch(() => { });
     }, []);
 
-    // Close real-estate dropdown on outside click
+    // Close real-estate dropdown on outside click (desktop)
     useEffect(() => {
         const handleClickOutside = (e) => {
             if (dropdownRef.current && !dropdownRef.current.contains(e.target) &&
@@ -60,7 +61,7 @@ export default function Navbar() {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Close city dropdown on outside click
+    // Close city dropdown on outside click (desktop)
     useEffect(() => {
         const handleClickOutside = (e) => {
             if (cityDropdownRef.current && !cityDropdownRef.current.contains(e.target) &&
@@ -74,17 +75,20 @@ export default function Navbar() {
 
     const handleCategoryClick = (categoryId) => {
         setDropdownOpen(false);
+        setMobileDropdownOpen(false);
         setMobileMenuOpen(false);
         router.push(`/catalog?category=${categoryId}&offset=0`);
     };
 
     const handleAllClick = () => {
         setDropdownOpen(false);
+        setMobileDropdownOpen(false);
         setMobileMenuOpen(false);
         router.push('/catalog?offset=0');
     };
 
     const handleAgentClick = () => {
+        setMobileMenuOpen(false);
         if (isAuthenticated) {
             router.push('/profile');
         } else {
@@ -278,14 +282,14 @@ export default function Navbar() {
                 </button>
             </div>
 
-            {/* ===== MOBILE FULLSCREEN MENU ===== */}
+            {/* ===== MOBILE FULLSCREEN MENU (TO'G'IRILGAN) ===== */}
             {mobileMenuOpen && (
                 <div
                     className="fixed inset-0 z-50 bg-[#1a1a1a] flex flex-col"
                     style={{ minHeight: '100dvh' }}
                 >
                     {/* Mobile menu header */}
-                    <div className="flex items-center justify-between p-4">
+                    <div className="flex items-center justify-between p-4 flex-shrink-0">
                         <Link href={'/'} onClick={() => setMobileMenuOpen(false)}>
                             <Image src="/icons/logo.svg" alt="logo" width={160} height={28} />
                         </Link>
@@ -298,12 +302,12 @@ export default function Navbar() {
                         </button>
                     </div>
 
-                    {/* Mobile nav links */}
-                    <nav className="flex flex-col px-6 pt-6 gap-1 flex-1 overflow-y-auto">
-                        {/* Недвижимость accordion */}
-                        <div>
+                    {/* Mobile nav links - overflow yaxshilandi */}
+                    <nav className="flex flex-col px-6 pt-2 gap-1 flex-1 overflow-y-auto" style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                        {/* Недвижимость accordion - mobile uchun alohida state */}
+                        <div className="w-full">
                             <button
-                                onClick={() => setDropdownOpen((prev) => !prev)}
+                                onClick={() => setMobileDropdownOpen((prev) => !prev)}
                                 className="flex items-center justify-between w-full text-white text-[18px] font-medium py-3 border-b border-white/10"
                             >
                                 Недвижимость
@@ -311,16 +315,17 @@ export default function Navbar() {
                                     size={18}
                                     style={{
                                         transition: 'transform 0.2s',
-                                        transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)'
+                                        transform: mobileDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)'
                                     }}
                                 />
                             </button>
 
-                            {dropdownOpen && (
-                                <div className="flex flex-col pl-4 py-2 gap-1">
+                            {mobileDropdownOpen && (
+                                <div className="flex flex-col pl-4 py-2 gap-1 w-full">
                                     <button
                                         onClick={handleAllClick}
-                                        className="text-left text-white/80 text-[15px] py-2 font-medium hover:text-white transition"
+                                        className="text-left text-white/80 text-[15px] py-2 font-medium hover:text-white transition w-full cursor-pointer"
+                                        style={{ cursor: 'pointer' }}
                                     >
                                         Все категории
                                     </button>
@@ -328,7 +333,8 @@ export default function Navbar() {
                                         <button
                                             key={cat.id}
                                             onClick={() => handleCategoryClick(cat.id)}
-                                            className="text-left text-white/60 text-[15px] py-2 hover:text-white transition"
+                                            className="text-left text-white/60 text-[15px] py-2 hover:text-white transition w-full cursor-pointer"
+                                            style={{ cursor: 'pointer' }}
                                         >
                                             {cat.name}
                                         </button>
@@ -342,15 +348,15 @@ export default function Navbar() {
                                 key={link.label}
                                 href={link.href}
                                 onClick={() => setMobileMenuOpen(false)}
-                                className="text-white text-[18px] font-medium py-3 border-b border-white/10 hover:text-white/70 transition"
+                                className="text-white text-[18px] font-medium py-3 border-b border-white/10 hover:text-white/70 transition w-full"
                             >
                                 {link.label}
                             </Link>
                         ))}
                     </nav>
 
-                    {/* Mobile bottom actions */}
-                    <div className="p-6 flex flex-col gap-3">
+                    {/* Mobile bottom actions - flex-shrink-0 qo'shildi */}
+                    <div className="p-6 flex flex-col gap-3 flex-shrink-0">
                         {/* City selector mobile */}
                         <div className="relative">
                             <button
@@ -372,16 +378,17 @@ export default function Navbar() {
                             {cityDropdownOpen && (
                                 <div
                                     className="absolute bottom-full left-0 right-0 mb-2 rounded-xl overflow-hidden border border-white/10"
-                                    style={{ background: '#2a2a2a' }}
+                                    style={{ background: '#2a2a2a', zIndex: 60 }}
                                 >
                                     {CITIES.map((city) => (
                                         <button
                                             key={city.value}
                                             onClick={() => { setSelectedCity(city); setCityDropdownOpen(false); }}
-                                            className="flex items-center gap-3 w-full text-left px-4 py-3 text-[15px] hover:bg-white/10 transition"
+                                            className="flex items-center gap-3 w-full text-left px-4 py-3 text-[15px] hover:bg-white/10 transition cursor-pointer"
                                             style={{
                                                 color: selectedCity.value === city.value ? '#F05D22' : '#e5e7eb',
                                                 fontWeight: selectedCity.value === city.value ? 600 : 400,
+                                                cursor: 'pointer'
                                             }}
                                         >
                                             <FiMapPin size={14} color={selectedCity.value === city.value ? '#F05D22' : '#9CA3AF'} />
@@ -393,10 +400,10 @@ export default function Navbar() {
                         </div>
 
                         <div className="flex gap-2">
-                            <button className="bg-white text-black font-medium text-[14px] px-5 py-3 rounded-full hover:bg-white/90 transition flex-1">
-                                <a href="#contact">Получить консультацию</a>
+                            <button className="bg-white text-black font-medium text-[14px] px-5 py-3 rounded-full hover:bg-white/90 transition flex-1 cursor-pointer">
+                                <a href="#contact" onClick={() => setMobileMenuOpen(false)}>Получить консультацию</a>
                             </button>
-                            <button className="bg-white/90 text-black font-medium text-[14px] px-5 py-3 rounded-full transition border border-white/20">
+                            <button className="bg-white/90 text-black font-medium text-[14px] px-5 py-3 rounded-full transition border border-white/20 cursor-pointer">
                                 Tg
                             </button>
                         </div>
@@ -404,17 +411,17 @@ export default function Navbar() {
                         <div className="flex gap-2">
                             <button
                                 onClick={() => { handleAgentClick(); setMobileMenuOpen(false); }}
-                                className="bg-white/90 text-black font-medium text-[14px] px-5 py-3 rounded-full transition border border-white/20 flex-1"
+                                className="bg-white/90 text-black font-medium text-[14px] px-5 py-3 rounded-full transition border border-white/20 flex-1 cursor-pointer"
                             >
                                 {isAuthenticated ? 'Профиль' : 'Агентам'}
                             </button>
                             <Link href={'/favorite'} onClick={() => setMobileMenuOpen(false)}>
-                                <button className="flex justify-center items-center w-[46px] h-[46px] rounded-full bg-white/90 border border-white/20">
+                                <button className="flex justify-center items-center w-[46px] h-[46px] rounded-full bg-white/90 border border-white/20 cursor-pointer">
                                     <Image src="/icons/1.svg" width={20} height={18} alt="icon1" />
                                 </button>
                             </Link>
                             <Link href={'/compare'} onClick={() => setMobileMenuOpen(false)}>
-                                <button className="flex justify-center items-center w-[46px] h-[46px] rounded-full bg-white/90 border border-white/20">
+                                <button className="flex justify-center items-center w-[46px] h-[46px] rounded-full bg-white/90 border border-white/20 cursor-pointer">
                                     <Image src="/icons/2.svg" width={20} height={18} alt="icon2" />
                                 </button>
                             </Link>

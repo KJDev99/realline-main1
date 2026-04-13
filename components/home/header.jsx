@@ -8,6 +8,7 @@ import { Autoplay, EffectFade } from 'swiper/modules';
 import { FiChevronDown, FiMenu, FiX, FiMapPin } from 'react-icons/fi';
 import useApiStore from '@/store/useApiStore';
 import { useRouter } from 'next/navigation';
+import toast, { Toaster } from 'react-hot-toast';
 
 import 'swiper/css';
 import 'swiper/css/effect-fade';
@@ -37,6 +38,8 @@ export default function Header() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
     const [selectedCity, setSelectedCity] = useState(CITIES[0]);
+    const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+    const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false);
 
     const dropdownRef = useRef(null);
     const buttonRef = useRef(null);
@@ -89,12 +92,14 @@ export default function Header() {
 
     const handleCategoryClick = (categoryId) => {
         setDropdownOpen(false);
+        setMobileDropdownOpen(false);
         setMobileMenuOpen(false);
         router.push(`/catalog?category=${categoryId}&offset=0`);
     };
 
     const handleAllClick = () => {
         setDropdownOpen(false);
+        setMobileDropdownOpen(false);
         setMobileMenuOpen(false);
         router.push('/catalog?offset=0');
     };
@@ -107,9 +112,47 @@ export default function Header() {
         }
     };
 
+    const handleLogout = () => {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        toast.success('Вы успешно вышли из системы');
+        setShowLogoutDialog(false);
+        setMobileMenuOpen(false);
+        setIsAuthenticated(false);
+        setTimeout(() => {
+            router.push('/');
+        }, 1000);
+    };
+
     return (
         <div className="herobg rounded-[20px] w-[calc(100%-10px)] overflow-hidden relative flex max-md:flex-col max-md:h-max"
             style={{ height: '100vh', minHeight: '600px' }}>
+
+            <Toaster position="top-right" />
+
+            {/* Logout Dialog */}
+            {showLogoutDialog && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
+                    <div className="bg-white rounded-[20px] p-6 max-w-md mx-4">
+                        <h3 className="text-xl font-semibold mb-4 text-[#141111]">Выход из системы</h3>
+                        <p className="text-gray-600 mb-6">Вы действительно хотите выйти из системы?</p>
+                        <div className="flex gap-4 justify-end">
+                            <button
+                                onClick={() => setShowLogoutDialog(false)}
+                                className="px-6 py-2 border border-gray-300 rounded-[10px] text-gray-700 hover:bg-gray-50 transition-colors"
+                            >
+                                Отмена
+                            </button>
+                            <button
+                                onClick={handleLogout}
+                                className="px-6 py-2 bg-red-600 text-white rounded-[10px] hover:bg-red-700 transition-colors"
+                            >
+                                Выйти
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* ===== LEFT SIDE (55%) ===== */}
             <div className="relative z-10 flex flex-col w-full lg:w-[55%] h-full p-4 lg:p-6">
@@ -344,12 +387,21 @@ export default function Header() {
                     <button className="bg-white text-black font-normal text-[14px] px-5 py-[10px] rounded-full hover:bg-white/90 transition">
                         <a href="#contact">Получить консультацию</a>
                     </button>
-                    <button
-                        onClick={handleAgentClick}
-                        className="bg-white backdrop-blur-md rounded-full px-5 py-[10px] font-normal text-[14px] transition cursor-pointer"
-                    >
-                        {isAuthenticated ? 'Профиль' : 'Агентам'}
-                    </button>
+                    {isAuthenticated ? (
+                        <button
+                            onClick={() => setShowLogoutDialog(true)}
+                            className="bg-white backdrop-blur-md rounded-full px-5 py-[10px] font-normal text-[14px] transition cursor-pointer"
+                        >
+                            Выйти
+                        </button>
+                    ) : (
+                        <button
+                            onClick={handleAgentClick}
+                            className="bg-white backdrop-blur-md rounded-full px-5 py-[10px] font-normal text-[14px] transition cursor-pointer"
+                        >
+                            Агентам
+                        </button>
+                    )}
                     <Link href={'/favorite'}>
                         <button className="flex justify-center items-center w-[38px] h-[38px] rounded-full bg-white border border-[#1411111A]">
                             <Image src="/icons/1.svg" width={20} height={17.79} alt="icon1" />
@@ -413,14 +465,14 @@ export default function Header() {
                 )}
             </div>
 
-            {/* ===== MOBILE FULLSCREEN MENU ===== */}
+            {/* ===== MOBILE FULLSCREEN MENU (TO'G'IRILGAN) ===== */}
             {mobileMenuOpen && (
                 <div
                     className="fixed inset-0 z-50 bg-[#1a1a1a] flex flex-col"
                     style={{ minHeight: '100dvh' }}
                 >
                     {/* Mobile menu header */}
-                    <div className="flex items-center justify-between p-4">
+                    <div className="flex items-center justify-between p-4 flex-shrink-0">
                         <Link href={'/'} onClick={() => setMobileMenuOpen(false)}>
                             <Image src="/icons/logo.svg" alt="logo" width={160} height={28} />
                         </Link>
@@ -434,11 +486,11 @@ export default function Header() {
                     </div>
 
                     {/* Mobile nav links */}
-                    <nav className="flex flex-col px-6 pt-6 gap-1 flex-1 overflow-y-auto">
+                    <nav className="flex flex-col px-6 pt-2 gap-1 flex-1 overflow-y-auto" style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
                         {/* Real estate with inline subcategories */}
-                        <div>
+                        <div className="w-full">
                             <button
-                                onClick={() => setDropdownOpen((prev) => !prev)}
+                                onClick={() => setMobileDropdownOpen((prev) => !prev)}
                                 className="flex items-center justify-between w-full text-white text-[18px] font-medium py-3 border-b border-white/10"
                             >
                                 Недвижимость
@@ -446,16 +498,16 @@ export default function Header() {
                                     size={18}
                                     style={{
                                         transition: 'transform 0.2s',
-                                        transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)'
+                                        transform: mobileDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)'
                                     }}
                                 />
                             </button>
 
-                            {dropdownOpen && (
-                                <div className="flex flex-col pl-4 py-2 gap-1">
+                            {mobileDropdownOpen && (
+                                <div className="flex flex-col pl-4 py-2 gap-1 w-full">
                                     <button
                                         onClick={handleAllClick}
-                                        className="text-left text-white/80 text-[15px] py-2 font-medium hover:text-white transition"
+                                        className="text-left text-white/80 text-[15px] py-2 font-medium hover:text-white transition w-full cursor-pointer"
                                     >
                                         Все категории
                                     </button>
@@ -463,7 +515,7 @@ export default function Header() {
                                         <button
                                             key={cat.id}
                                             onClick={() => handleCategoryClick(cat.id)}
-                                            className="text-left text-white/60 text-[15px] py-2 hover:text-white transition"
+                                            className="text-left text-white/60 text-[15px] py-2 hover:text-white transition w-full cursor-pointer"
                                         >
                                             {cat.name}
                                         </button>
@@ -477,7 +529,7 @@ export default function Header() {
                                 key={link.label}
                                 href={link.href}
                                 onClick={() => setMobileMenuOpen(false)}
-                                className="text-white text-[18px] font-medium py-3 border-b border-white/10 hover:text-white/70 transition"
+                                className="text-white text-[18px] font-medium py-3 border-b border-white/10 hover:text-white/70 transition w-full"
                             >
                                 {link.label}
                             </Link>
@@ -485,7 +537,7 @@ export default function Header() {
                     </nav>
 
                     {/* Mobile bottom actions */}
-                    <div className="p-6 flex flex-col gap-3">
+                    <div className="p-6 flex flex-col gap-3 flex-shrink-0">
                         {/* City selector — mobile */}
                         <div className="relative">
                             <button
@@ -507,7 +559,7 @@ export default function Header() {
                             {cityDropdownOpen && (
                                 <div
                                     className="absolute bottom-full left-0 right-0 mb-2 rounded-xl overflow-hidden border border-white/10"
-                                    style={{ background: '#2a2a2a' }}
+                                    style={{ background: '#2a2a2a', zIndex: 60 }}
                                 >
                                     {CITIES.map((city) => (
                                         <button
@@ -516,7 +568,7 @@ export default function Header() {
                                                 setSelectedCity(city);
                                                 setCityDropdownOpen(false);
                                             }}
-                                            className="flex items-center gap-3 w-full text-left px-4 py-3 text-[15px] hover:bg-white/10 transition"
+                                            className="flex items-center gap-3 w-full text-left px-4 py-3 text-[15px] hover:bg-white/10 transition cursor-pointer"
                                             style={{
                                                 color: selectedCity.value === city.value ? '#F05D22' : '#e5e7eb',
                                                 fontWeight: selectedCity.value === city.value ? 600 : 400,
@@ -531,28 +583,37 @@ export default function Header() {
                         </div>
 
                         <div className="flex gap-2">
-                            <button className="bg-white text-black font-medium text-[14px] px-5 py-3 rounded-full hover:bg-white/90 transition flex-1">
-                                <a href="#contact">Получить консультацию</a>
+                            <button className="bg-white text-black font-medium text-[14px] px-5 py-3 rounded-full hover:bg-white/90 transition flex-1 cursor-pointer">
+                                <a href="#contact" onClick={() => setMobileMenuOpen(false)}>Получить консультацию</a>
                             </button>
-                            <button className="bg-white/90 text-black font-medium text-[14px] px-5 py-3 rounded-full hover:bg-white/20 transition border border-white/20">
+                            <button className="bg-white/90 text-black font-medium text-[14px] px-5 py-3 rounded-full transition border border-white/20 cursor-pointer">
                                 Tg
                             </button>
                         </div>
 
                         <div className="flex gap-2">
-                            <button
-                                onClick={() => { handleAgentClick(); setMobileMenuOpen(false); }}
-                                className="bg-white/90 text-black font-medium text-[14px] px-5 py-3 rounded-full hover:bg-white/20 transition border border-white/20 flex-1"
-                            >
-                                {isAuthenticated ? 'Профиль' : 'Агентам'}
-                            </button>
+                            {isAuthenticated ? (
+                                <button
+                                    onClick={() => { setShowLogoutDialog(true); setMobileMenuOpen(false); }}
+                                    className="bg-red-600 text-white font-medium text-[14px] px-5 py-3 rounded-full transition flex-1 cursor-pointer"
+                                >
+                                    Выйти
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => { handleAgentClick(); setMobileMenuOpen(false); }}
+                                    className="bg-white/90 text-black font-medium text-[14px] px-5 py-3 rounded-full transition border border-white/20 flex-1 cursor-pointer"
+                                >
+                                    Агентам
+                                </button>
+                            )}
                             <Link href={'/favorite'} onClick={() => setMobileMenuOpen(false)}>
-                                <button className="flex justify-center items-center w-[46px] h-[46px] rounded-full bg-white/90 border border-white/20">
+                                <button className="flex justify-center items-center w-[46px] h-[46px] rounded-full bg-white/90 border border-white/20 cursor-pointer">
                                     <Image src="/icons/1.svg" width={20} height={18} alt="icon1" />
                                 </button>
                             </Link>
                             <Link href={'/compare'} onClick={() => setMobileMenuOpen(false)}>
-                                <button className="flex justify-center items-center w-[46px] h-[46px] rounded-full bg-white/90 border border-white/20">
+                                <button className="flex justify-center items-center w-[46px] h-[46px] rounded-full bg-white/90 border border-white/20 cursor-pointer">
                                     <Image src="/icons/2.svg" width={20} height={18} alt="icon2" />
                                 </button>
                             </Link>
