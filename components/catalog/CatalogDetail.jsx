@@ -3,8 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
-import { FiHeart, FiBarChart2 } from 'react-icons/fi';
-import { FaHeart } from 'react-icons/fa';
 import HomeLink from '../homeLink';
 import useApiStore from '@/store/useApiStore';
 
@@ -45,27 +43,37 @@ function InfoRow({ label, value }) {
 /* ─── Image gallery ─── */
 function Gallery({ images }) {
     const [active, setActive] = useState(0);
-    const fallback = '/sec2.png';
+    const fallback = "/sec2.png";
     const imgs = images?.length > 0 ? images : [fallback];
 
+    const getImgSrc = (img) =>
+        typeof img === "string" ? img : img?.image ?? fallback;
+
     return (
-        <div>
-            {/* Main image */}
-            <div style={{ position: 'relative', width: '100%', height: 400, borderRadius: 16, overflow: 'hidden', marginBottom: 12 }}>
-                <Image src={typeof imgs[active] === 'string' ? imgs[active] : imgs[active]?.image ?? fallback}
-                    alt="property" fill className="object-cover" priority />
+        <div style={{ width: "100%" }}>
+            <div style={{
+                position: "relative", width: "100%", aspectRatio: "16 / 9",
+                borderRadius: 16, overflow: "hidden", marginBottom: 10,
+            }}>
+                <Image
+                    src={getImgSrc(imgs[active])} alt="property" fill
+                    className="object-cover" priority
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
+                />
             </div>
-            {/* Thumbnails */}
             {imgs.length > 1 && (
-                <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+                <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 6, scrollbarWidth: "thin" }}>
                     {imgs.map((img, i) => (
                         <div key={i} onClick={() => setActive(i)} style={{
-                            flexShrink: 0, width: 90, height: 64, borderRadius: 10,
-                            overflow: 'hidden', cursor: 'pointer', position: 'relative',
-                            border: i === active ? '2px solid #F05D22' : '2px solid transparent',
+                            flexShrink: 0,
+                            width: "clamp(64px, 14vw, 100px)",
+                            height: "clamp(46px, 10vw, 72px)",
+                            borderRadius: 10, overflow: "hidden", cursor: "pointer", position: "relative",
+                            border: i === active ? "2px solid #F05D22" : "2px solid transparent",
+                            transition: "border-color 0.2s, opacity 0.2s",
+                            opacity: i === active ? 1 : 0.72,
                         }}>
-                            <Image src={typeof img === 'string' ? img : img?.image ?? fallback}
-                                alt="" fill className="object-cover" />
+                            <Image src={getImgSrc(img)} alt={`thumb-${i}`} fill className="object-cover" sizes="120px" />
                         </div>
                     ))}
                 </div>
@@ -85,22 +93,77 @@ function MapBlock({ lat, lng }) {
     );
 }
 
+/* ─── Описание с "Читать далее" ─── */
+function DescriptionBlock({ description, extraFields }) {
+    const [open, setOpen] = useState(false);
+    if (!description && (!extraFields || extraFields.length === 0)) return null;
+
+    return (
+        <div style={{ marginTop: 48 }}>
+            <h2 style={{ fontSize: 20, fontWeight: 500, color: '#111827', marginBottom: 12 }}>Описание</h2>
+            {description && (
+                <p style={{ fontSize: 15, color: '#374151', lineHeight: 1.7, marginBottom: extraFields?.length ? 16 : 0 }}>
+                    {description}
+                </p>
+            )}
+            {extraFields?.length > 0 && (
+                <>
+                    {open && (
+                        <div style={{ background: '#F9FAFB', borderRadius: 12, padding: '16px', marginTop: 8 }}>
+                            {extraFields.map(([label, value]) =>
+                                value ? <InfoRow key={label} label={label} value={value} /> : null
+                            )}
+                        </div>
+                    )}
+                    <button
+                        onClick={() => setOpen(v => !v)}
+                        style={{
+                            marginTop: 12, background: 'none', border: '1px solid #E5E7EB',
+                            borderRadius: 999, padding: '8px 20px', fontSize: 14,
+                            color: '#F05D22', cursor: 'pointer', fontWeight: 500,
+                        }}
+                    >
+                        {open ? 'Скрыть подробности' : 'Показать все характеристики'}
+                    </button>
+                </>
+            )}
+        </div>
+    );
+}
+
 /* ═══════════════════════════════════════
-   NEW BUILDING detail (Новостройки)
+   NEW BUILDING detail
    ═══════════════════════════════════════ */
 function NewBuildingDetail({ p }) {
     const rd = p.residential_details;
+
+    // Asosiy 5 ta (kartochkada ko'rsatiladi)
+    const mainFields = [
+        ['Застройщик', rd?.developer],
+        ['Срок сдачи', rd?.completion_period_text],
+        ['Класс жилья', rd?.housing_class],
+        ['Цена за м²', rd?.price_per_sqm_from ? `от ${formatPrice(rd.price_per_sqm_from)} ₽` : null],
+        ['Этажей', p.floors],
+    ];
+
+    // Qolgan maydonlar — "Показать все" tugmasi ostida
+    const extraFields = [
+        ['Всего квартир', rd?.units_total],
+        ['В продаже', rd?.units_available],
+        ['Материал стен', p.wall_material],
+        ['Отделка', p.finishing],
+        ['От МКАД', p.distance_to_mkad_km ? `${p.distance_to_mkad_km} км` : null],
+    ];
+
     return (
         <div className="max-w-[1400px] mx-auto px-5 py-10">
             <HomeLink link="/catalog" label="Каталог" link2={"/catalog/" + p.id} label2={p.name} />
 
             <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap', marginTop: 24 }}>
-                {/* LEFT */}
                 <div style={{ flex: '1.2 1 340px', minWidth: 300 }}>
                     <Gallery images={p.images} />
                 </div>
 
-                {/* RIGHT — info card */}
                 <div style={{ flex: '0 1 340px', minWidth: 280 }}>
                     <h1 style={{ fontSize: 22, fontWeight: 500, color: '#111827', margin: '0 0 4px' }}>{p.name}</h1>
                     <p style={{ fontSize: 13, color: '#9CA3AF', margin: '0 0 16px' }}>{p.code}</p>
@@ -109,20 +172,11 @@ function NewBuildingDetail({ p }) {
                         от {formatPrice(p.price)} ₽
                     </div>
 
-                    {rd && (
-                        <div style={{ background: '#F9FAFB', borderRadius: 12, padding: '16px', marginBottom: 16 }}>
-                            <InfoRow label="Застройщик" value={rd.developer} />
-                            <InfoRow label="Срок сдачи" value={rd.completion_period_text} />
-                            <InfoRow label="Класс" value={rd.housing_class} />
-                            <InfoRow label="Всего квартир" value={rd.units_total} />
-                            <InfoRow label="В продаже" value={rd.units_available} />
-                            <InfoRow label="Цена за м²" value={rd.price_per_sqm_from ? `от ${formatPrice(rd.price_per_sqm_from)} ₽` : null} />
-                            <InfoRow label="Этажей" value={p.floors} />
-                            <InfoRow label="Материал стен" value={p.wall_material} />
-                            <InfoRow label="Отделка" value={p.finishing} />
-                            <InfoRow label="От МКАД" value={p.distance_to_mkad_km ? `${p.distance_to_mkad_km} км` : null} />
-                        </div>
-                    )}
+                    <div style={{ background: '#F9FAFB', borderRadius: 12, padding: '16px', marginBottom: 16 }}>
+                        {mainFields.map(([label, value]) =>
+                            <InfoRow key={label} label={label} value={value} />
+                        )}
+                    </div>
 
                     <button style={{
                         background: ORANGE, color: '#fff', border: 'none',
@@ -134,15 +188,8 @@ function NewBuildingDetail({ p }) {
                 </div>
             </div>
 
-            {/* Description */}
-            {p.description && (
-                <div style={{ marginTop: 48 }}>
-                    <h2 style={{ fontSize: 20, fontWeight: 500, color: '#111827', marginBottom: 12 }}>Описание</h2>
-                    <p style={{ fontSize: 15, color: '#374151', lineHeight: 1.7 }}>{p.description}</p>
-                </div>
-            )}
+            <DescriptionBlock description={p.description} extraFields={extraFields} />
 
-            {/* Location + infra */}
             <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap', marginTop: 48 }}>
                 <div style={{ flex: 1, minWidth: 240 }}>
                     <h2 style={{ fontSize: 20, fontWeight: 500, color: '#111827', marginBottom: 12 }}>Участок и локация</h2>
@@ -167,20 +214,30 @@ function NewBuildingDetail({ p }) {
 }
 
 /* ═══════════════════════════════════════
-   LAND PLOT detail (Земельные участки)
+   LAND PLOT detail
    ═══════════════════════════════════════ */
 function LandPlotDetail({ p }) {
+    const mainFields = [
+        ['Площадь участка', p.land_area ? `${p.land_area} сот.` : null],
+        ['Район', p.district?.name],
+        ['Шоссе', p.highway?.name],
+        ['От МКАД', p.distance_to_mkad_km ? `${p.distance_to_mkad_km} км` : null],
+        ['Посёлок', p.settlement],
+    ];
+
+    const extraFields = [
+        ['Отделка', p.finishing],
+    ];
+
     return (
         <div className="max-w-[1400px] mx-auto px-5 py-10">
             <HomeLink link="/catalog" label="Каталог" link2={"/catalog/" + p.id} label2={p.name} />
 
             <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap', marginTop: 24 }}>
-                {/* LEFT — gallery */}
                 <div style={{ flex: '1.2 1 340px', minWidth: 300 }}>
                     <Gallery images={p.images} />
                 </div>
 
-                {/* RIGHT */}
                 <div style={{ flex: '0 1 340px', minWidth: 280 }}>
                     <h1 style={{ fontSize: 22, fontWeight: 500, color: '#111827', margin: '0 0 4px' }}>{p.name}</h1>
                     <p style={{ fontSize: 13, color: '#9CA3AF', margin: '0 0 16px' }}>{p.code}</p>
@@ -195,12 +252,9 @@ function LandPlotDetail({ p }) {
                     </div>
 
                     <div style={{ background: '#F9FAFB', borderRadius: 12, padding: '16px', marginBottom: 16 }}>
-                        <InfoRow label="Площадь участка" value={p.land_area ? `${p.land_area} сот.` : null} />
-                        <InfoRow label="Район" value={p.district?.name} />
-                        <InfoRow label="Шоссе" value={p.highway?.name} />
-                        <InfoRow label="Посёлок" value={p.settlement} />
-                        <InfoRow label="От МКАД" value={p.distance_to_mkad_km ? `${p.distance_to_mkad_km} км` : null} />
-                        <InfoRow label="Отделка" value={p.finishing} />
+                        {mainFields.map(([label, value]) =>
+                            <InfoRow key={label} label={label} value={value} />
+                        )}
                     </div>
 
                     {p.tags?.length > 0 && (
@@ -224,15 +278,8 @@ function LandPlotDetail({ p }) {
                 </div>
             </div>
 
-            {/* Description */}
-            {p.description && (
-                <div style={{ marginTop: 48 }}>
-                    <h2 style={{ fontSize: 20, fontWeight: 500, color: '#111827', marginBottom: 12 }}>Описание</h2>
-                    <p style={{ fontSize: 15, color: '#374151', lineHeight: 1.7 }}>{p.description}</p>
-                </div>
-            )}
+            <DescriptionBlock description={p.description} extraFields={extraFields} />
 
-            {/* Location */}
             <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap', marginTop: 48 }}>
                 <div style={{ flex: 1, minWidth: 240 }}>
                     <h2 style={{ fontSize: 20, fontWeight: 500, color: '#111827', marginBottom: 16 }}>Участок и локация</h2>
@@ -266,17 +313,38 @@ function LandPlotDetail({ p }) {
    ═══════════════════════════════════════ */
 function OtherDetail({ p }) {
     const rd = p.residential_details;
+
+    const mainFields = [
+        ['Площадь', p.area ? `${p.area} м²` : null],
+        ['Комнат', p.rooms],
+        ['Этажей', p.floors],
+        ['Район', p.district?.name],
+        ['От МКАД', p.distance_to_mkad_km ? `${p.distance_to_mkad_km} км` : null],
+    ];
+
+    const extraFields = [
+        ['Спален', p.bedrooms],
+        ['Санузлов', p.bathrooms],
+        ['Год постройки', p.year_built],
+        ['Материал стен', p.wall_material],
+        ['Отделка', p.finishing],
+        ['Шоссе', p.highway?.name],
+        ...(rd ? [
+            ['Застройщик', rd.developer],
+            ['Срок сдачи', rd.completion_period_text],
+            ['Класс жилья', rd.housing_class],
+        ] : []),
+    ];
+
     return (
-        <div className="max-w-[1400px] mx-auto px-5 py-10 ">
+        <div className="max-w-[1400px] mx-auto px-5 py-10">
             <HomeLink link="/catalog" label="Каталог" link2={"/catalog/" + p.id} label2={p.name} />
 
             <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap', marginTop: 24 }}>
-                {/* LEFT */}
                 <div style={{ flex: '1.2 1 340px', minWidth: 300 }}>
                     <Gallery images={p.images} />
                 </div>
 
-                {/* RIGHT */}
                 <div style={{ flex: '0 1 340px', minWidth: 280 }}>
                     <h1 style={{ fontSize: 22, fontWeight: 500, color: '#111827', margin: '0 0 4px' }}>{p.name}</h1>
                     <p style={{ fontSize: 13, color: '#9CA3AF', margin: '0 0 16px' }}>{p.code}</p>
@@ -286,22 +354,9 @@ function OtherDetail({ p }) {
                     </div>
 
                     <div style={{ background: '#F9FAFB', borderRadius: 12, padding: '16px', marginBottom: 16 }}>
-                        <InfoRow label="Площадь" value={p.area ? `${p.area} м²` : null} />
-                        <InfoRow label="Комнат" value={p.rooms} />
-                        <InfoRow label="Спален" value={p.bedrooms} />
-                        <InfoRow label="Санузлов" value={p.bathrooms} />
-                        <InfoRow label="Этажей" value={p.floors} />
-                        <InfoRow label="Год постройки" value={p.year_built} />
-                        <InfoRow label="Материал стен" value={p.wall_material} />
-                        <InfoRow label="Отделка" value={p.finishing} />
-                        <InfoRow label="Район" value={p.district?.name} />
-                        <InfoRow label="Шоссе" value={p.highway?.name} />
-                        <InfoRow label="От МКАД" value={p.distance_to_mkad_km ? `${p.distance_to_mkad_km} км` : null} />
-                        {rd && <>
-                            <InfoRow label="Застройщик" value={rd.developer} />
-                            <InfoRow label="Срок сдачи" value={rd.completion_period_text} />
-                            <InfoRow label="Класс" value={rd.housing_class} />
-                        </>}
+                        {mainFields.map(([label, value]) =>
+                            <InfoRow key={label} label={label} value={value} />
+                        )}
                     </div>
 
                     <button style={{
@@ -314,15 +369,8 @@ function OtherDetail({ p }) {
                 </div>
             </div>
 
-            {/* Description */}
-            {p.description && (
-                <div style={{ marginTop: 48 }}>
-                    <h2 style={{ fontSize: 20, fontWeight: 500, color: '#111827', marginBottom: 12 }}>Описание</h2>
-                    <p style={{ fontSize: 15, color: '#374151', lineHeight: 1.7 }}>{p.description}</p>
-                </div>
-            )}
+            <DescriptionBlock description={p.description} extraFields={extraFields} />
 
-            {/* Location + infra */}
             <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap', marginTop: 48 }}>
                 <div style={{ flex: 1, minWidth: 240 }}>
                     <h2 style={{ fontSize: 20, fontWeight: 500, color: '#111827', marginBottom: 16 }}>Участок и локация</h2>
@@ -348,7 +396,6 @@ function OtherDetail({ p }) {
                         </div>
                     </div>
 
-                    {/* Коммуникации */}
                     {(p.electricity_supply || p.water_supply || p.sewage_type || p.heating_type) && (
                         <div style={{ marginTop: 24 }}>
                             <h3 style={{ fontSize: 16, fontWeight: 500, color: '#111827', marginBottom: 12 }}>Коммуникации</h3>
@@ -415,7 +462,6 @@ export default function CatalogDetail() {
     }
 
     const slug = property.category?.slug;
-
     if (slug === 'new_building') return <NewBuildingDetail p={property} />;
     if (slug === 'land_plot') return <LandPlotDetail p={property} />;
     return <OtherDetail p={property} />;

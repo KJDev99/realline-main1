@@ -5,15 +5,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 import useApiStore from '@/store/useApiStore';
 
-const CARD_GRADIENT =
-    'linear-gradient(90deg, #F05D22 0%, #DF3505 35.22%, #F13F03 68.86%, #F94A0B 100%)';
+const CARD_GRADIENT = 'linear-gradient(90deg, #F05D22 0%, #DF3505 35.22%, #F13F03 68.86%, #F94A0B 100%)';
 
 export default function WhyUs() {
     const scrollRef = useRef(null);
     const { getData } = useApiStore();
     const [cards, setCards] = useState([]);
-
-    // For equal card heights — measure tallest card
     const cardRefs = useRef([]);
     const [cardHeight, setCardHeight] = useState('auto');
 
@@ -24,12 +21,10 @@ export default function WhyUs() {
                 setCards([...list].sort((a, b) => a.sort_order - b.sort_order));
             })
             .catch(() => { });
-    }, []); // eslint-disable-line
+    }, []);
 
-    // After cards render — measure and equalize heights
     useEffect(() => {
         if (cards.length === 0) return;
-        // Wait one frame for DOM to paint
         requestAnimationFrame(() => {
             const heights = cardRefs.current
                 .filter(Boolean)
@@ -60,8 +55,6 @@ export default function WhyUs() {
                 }
                 .whyus-scroll::-webkit-scrollbar { display: none; }
 
-                /* Title: sticky but only within the outer box,
-                   stays at top — does NOT overlap the card area */
                 .whyus-title-sticky {
                     position: sticky;
                     top: 0;
@@ -96,11 +89,9 @@ export default function WhyUs() {
                 .whyus-bottom-space { height: 40vh; }
             `}</style>
 
-            <div className="mr-1 ml-1">
-                {/* ── Scrollable section ── */}
+            <div className="mx-1">
                 <div className="whyus-outer">
-                    {/* BG image */}
-                    <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+                    <div className="absolute inset-0 z-0">
                         <Image
                             src="/sec3.png"
                             alt="background"
@@ -109,59 +100,34 @@ export default function WhyUs() {
                             priority
                         />
                     </div>
-                    {/* Overlay */}
-                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 1 }} />
+                    <div className="absolute inset-0 bg-black/35 z-1" />
 
                     <div className="whyus-scroll" ref={scrollRef}>
-                        {/* Sticky title — occupies top half, card stacking starts below it */}
                         <div className="whyus-title-sticky">
                             <h2 className="font-normal text-[30px] leading-[100%] tracking-[0%] text-center text-white px-4">
                                 Почему клиенты выбирают Реаллайн
                             </h2>
                         </div>
 
-                        {/* Cards */}
                         <div className="whyus-cards-inner">
                             {cards.map((card, i) => (
                                 <div key={card.id} className="whyus-card-sticky">
                                     <div
                                         ref={el => cardRefs.current[i] = el}
+                                        className="rounded-[20px] shadow-[0_8px_40px_rgba(0,0,0,0.22)] p-[32px_40px] max-md:p-4 max-md:rounded-[15px] flex flex-col justify-between box-border"
                                         style={{
                                             background: CARD_GRADIENT,
-                                            borderRadius: '20px',
-                                            boxShadow: '0 8px 40px rgba(0,0,0,0.22)',
-                                            padding: '32px 40px',
                                             height: cardHeight !== 'auto' ? cardHeight : undefined,
-                                            boxSizing: 'border-box',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            justifyContent: 'space-between',
                                         }}
                                     >
                                         <div>
-                                            <span style={{
-                                                color: 'rgba(255,255,255,0.6)',
-                                                fontSize: 14,
-                                                fontWeight: 500,
-                                                display: 'block',
-                                                marginBottom: 10,
-                                            }}>
+                                            <span className="text-white/60 text-[14px] font-medium block mb-[10px]">
                                                 {String(i + 1).padStart(2, '0')}
                                             </span>
-                                            <h3 style={{
-                                                color: '#fff',
-                                                fontSize: 20,
-                                                fontWeight: 500,
-                                                marginBottom: 12,
-                                                lineHeight: 1.3,
-                                            }}>
+                                            <h3 className="text-white text-[20px] font-medium mb-3 leading-[1.3]">
                                                 {card.title}
                                             </h3>
-                                            <p style={{
-                                                color: 'rgba(255,255,255,0.85)',
-                                                fontSize: 16,
-                                                lineHeight: 1.6,
-                                            }}>
+                                            <p className="text-white/85 text-[16px] leading-[1.6] max-md:text-sm max-md:leading-[1.4]">
                                                 {card.body}
                                             </p>
                                         </div>
@@ -169,16 +135,12 @@ export default function WhyUs() {
                                 </div>
                             ))}
 
-                            {/* Skeleton cards while loading */}
                             {cards.length === 0 && Array.from({ length: 4 }).map((_, i) => (
                                 <div key={i} className="whyus-card-sticky">
-                                    <div style={{
-                                        background: CARD_GRADIENT,
-                                        borderRadius: '20px',
-                                        height: 160,
-                                        opacity: 0.4,
-                                        animation: 'pulse 1.4s ease-in-out infinite',
-                                    }} />
+                                    <div
+                                        className="rounded-[20px] h-[160px] opacity-40 animate-pulse"
+                                        style={{ background: CARD_GRADIENT }}
+                                    />
                                 </div>
                             ))}
                         </div>
@@ -187,21 +149,10 @@ export default function WhyUs() {
                     </div>
                 </div>
 
-                {/* ── Button — OUTSIDE the scrollable bg section ── */}
                 <div className="flex justify-center mt-6 mb-2">
                     <Link
                         href="/about"
-                        style={{
-                            display: 'inline-block',
-                            background: '#111',
-                            color: '#fff',
-                            fontWeight: 600,
-                            borderRadius: 999,
-                            padding: '16px 36px',
-                            fontSize: 15,
-                            textDecoration: 'none',
-                            transition: 'background 0.2s',
-                        }}
+                        className="inline-block bg-[#111] text-white font-semibold rounded-full py-4 px-9 text-[15px] no-underline transition-colors duration-200 hover:bg-[#222]"
                     >
                         Подробнее о компании
                     </Link>
