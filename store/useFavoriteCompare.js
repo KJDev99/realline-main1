@@ -1,124 +1,229 @@
 'use client'
-import { useState, useEffect, useCallback, useRef } from 'react'
+
+import { useEffect, useCallback } from 'react'
+import { create } from 'zustand'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || ''
 
+const LOCAL_FAV = 'local_favorites'
+const LOCAL_CMP = 'local_compares'
+
+/** Login / logout — favorite store qayta yuklansin */
+export const AUTH_CHANGED_EVENT = 'auth-changed'
+
 function getToken() {
     return typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
 }
+
 function getAuthHeaders() {
     return { Authorization: `Bearer ${getToken()}` }
 }
+
 function getLocalList(key) {
-    try { return JSON.parse(localStorage.getItem(key) || '[]') } catch { return [] }
+    try {
+        return JSON.parse(localStorage.getItem(key) || '[]')
+    } catch {
+        return []
+    }
 }
+
 function setLocalList(key, list) {
     localStorage.setItem(key, JSON.stringify(list))
 }
 
-export function useFavoriteCompare() {
-    const [favorites, setFavorites] = useState([])
-    const [compares, setCompares] = useState([])
+/** API va JSON parse ba'zan string/number aralash qaytaradi — includes() uchun bir xil qilamiz */
+function normalizeId(id) {
+    const n = Number(id)
+    return Number.isFinite(n) ? n : id
+}
 
-    // ✅ Ref orqali latest state — stale closure muammosini hal qiladi
-    const favoritesRef = useRef(favorites)
-    const comparesRef = useRef(compares)
+function extractPropertyIds(data) {
+    const list = data?.results ?? data ?? []
+    return list
+        .map((item) => normalizeId(item.property_listing?.id ?? item.id))
+        .filter((x) => x != null && x !== '')
+}
 
-    useEffect(() => { favoritesRef.current = favorites }, [favorites])
-    useEffect(() => { comparesRef.current = compares }, [compares])
+/** Bir vaqtda faqat bitta hydrate (ko‘p kartochkadan parallel chaqiruv) */
+let hydrateInFlight = null
 
-    const isAuth = () => !!getToken()
+let authListenerAttached = false
+function attachAuthListenerOnce() {
+    if (typeof window === 'undefined' || authListenerAttached) {
+        return
+    }
+    authListenerAttached = true
+    window.addEventListener(AUTH_CHANGED_EVENT, () => {
+        void useFavoriteCompareStore.getState().invalidateAndHydrate()
+    })
+}
 
-    useEffect(() => {
-        if (!isAuth()) {
-            setFavorites(getLocalList('local_favorites'))
-            setCompares(getLocalList('local_compares'))
-        }
-    }, [])
+export const useFavoriteCompareStore = create((set, get) => ({
+    favorites: [],
+    compares: [],
+    /** token o‘zgarganda qayta yuklash uchun */
+    hydrated: false,
+    _lastToken: undefined,
 
-    useEffect(() => {
-        if (!isAuth()) return
-        Promise.all([
-            axios.get(`${API_BASE}accounts/profile/favorites/`, { headers: getAuthHeaders() }),
-            axios.get(`${API_BASE}accounts/profile/compare/`, { headers: getAuthHeaders() }),
-        ]).then(([favRes, cmpRes]) => {
-            const favIds = (favRes.data?.results ?? favRes.data ?? []).map(f => f.property_listing?.id ?? f.id)
-            const cmpIds = (cmpRes.data?.results ?? cmpRes.data ?? []).map(c => c.property_listing?.id ?? c.id)
-            setFavorites(favIds)
-            setCompares(cmpIds)
-        }).catch(() => { })
-    }, [])
+    /** Login / logout dan keyin qayta yuklash */
+    invalidateAndHydrate: async () => {
+        set({ hydrated: false, _lastToken: undefined })
+        await get().hydrateOnce()
+    },
 
-    const isFavorite = useCallback((id) => favoritesRef.current.includes(id), [])
-    const isCompare = useCallback((id) => comparesRef.current.includes(id), [])
-
-    // ✅ toggleFavorite — dependency array tozalandi, ref orqali ishlaydi
-    const toggleFavorite = useCallback(async (id, onRemoved) => {
-        if (!isAuth()) {
-            const current = favoritesRef.current
-            const alreadyIn = current.includes(id)
-            const next = alreadyIn ? current.filter(x => x !== id) : [...current, id]
-            setLocalList('local_favorites', next)
-            setFavorites(next)
-            toast.success(alreadyIn ? 'Удалено из избранного' : 'Добавлено в избранное')
-            if (alreadyIn && onRemoved) onRemoved(id)
+    hydrateOnce: async () => {
+        if (typeof window === 'undefined') {
             return
         }
-        const alreadyIn = favoritesRef.current.includes(id)
+
+        if (hydrateInFlight) {
+            await hydrateInFlight
+            return
+        }
+
+        const token = getToken() ?? null
+        if (token !== get()._lastToken) {
+            set({ _lastToken: token, hydrated: false })
+        }
+
+        if (get().hydrated) {
+            return
+        }
+
+        hydrateInFlight = (async () => {
+            try {
+                if (!getToken()) {
+                    set({
+                        favorites: getLocalList(LOCAL_FAV).map(normalizeId),
+                        compares: getLocalList(LOCAL_CMP).map(normalizeId),
+                        hydrated: true,
+                    })
+                    return
+                }
+
+                try {
+                    const [favRes, cmpRes] = await Promise.all([
+                        axios.get(`${API_BASE}accounts/profile/favorites/`, { headers: getAuthHeaders() }),
+                        axios.get(`${API_BASE}accounts/profile/compare/`, { headers: getAuthHeaders() }),
+                    ])
+                    set({
+                        favorites: extractPropertyIds(favRes.data),
+                        compares: extractPropertyIds(cmpRes.data),
+                        hydrated: true,
+                    })
+                } catch {
+                    set({ hydrated: true })
+                }
+            } finally {
+                hydrateInFlight = null
+            }
+        })()
+
+        await hydrateInFlight
+    },
+
+    toggleFavorite: async (rawId, onRemoved) => {
+        const id = normalizeId(rawId)
+
+        if (!getToken()) {
+            const current = get().favorites
+            const alreadyIn = current.includes(id)
+            const next = alreadyIn ? current.filter((x) => x !== id) : [...current, id]
+            setLocalList(LOCAL_FAV, next)
+            set({ favorites: next })
+            toast.success(alreadyIn ? 'Удалено из избранного' : 'Добавлено в избранное')
+            if (alreadyIn && onRemoved) {
+                onRemoved(id)
+            }
+            return
+        }
+
+        const alreadyIn = get().favorites.includes(id)
         if (alreadyIn) {
             try {
                 await axios.delete(`${API_BASE}accounts/profile/favorites/${id}/`, { headers: getAuthHeaders() })
-                setFavorites(prev => prev.filter(x => x !== id))
+                set({ favorites: get().favorites.filter((x) => x !== id) })
                 toast.success('Удалено из избранного')
-                if (onRemoved) onRemoved(id)
+                if (onRemoved) {
+                    onRemoved(id)
+                }
             } catch {
                 toast.error('Не удалось удалить из избранного')
             }
         } else {
             try {
-                await axios.post(`${API_BASE}accounts/profile/favorites/add/`, { property_listing: id }, { headers: getAuthHeaders() })
-                setFavorites(prev => [...prev, id])
+                await axios.post(
+                    `${API_BASE}accounts/profile/favorites/add/`,
+                    { property_listing: id },
+                    { headers: getAuthHeaders() },
+                )
+                set({ favorites: [...get().favorites, id] })
                 toast.success('Добавлено в избранное')
             } catch {
                 toast.error('Не удалось добавить в избранное')
             }
         }
-    }, [])
+    },
 
-    // ✅ toggleCompare — xuddi shunday
-    const toggleCompare = useCallback(async (id, onRemoved) => {
-        if (!isAuth()) {
-            const current = comparesRef.current
+    toggleCompare: async (rawId, onRemoved) => {
+        const id = normalizeId(rawId)
+
+        if (!getToken()) {
+            const current = get().compares
             const alreadyIn = current.includes(id)
-            const next = alreadyIn ? current.filter(x => x !== id) : [...current, id]
-            setLocalList('local_compares', next)
-            setCompares(next)
+            const next = alreadyIn ? current.filter((x) => x !== id) : [...current, id]
+            setLocalList(LOCAL_CMP, next)
+            set({ compares: next })
             toast.success(alreadyIn ? 'Удалено из сравнения' : 'Добавлено в сравнение')
-            if (alreadyIn && onRemoved) onRemoved(id)
+            if (alreadyIn && onRemoved) {
+                onRemoved(id)
+            }
             return
         }
-        const alreadyIn = comparesRef.current.includes(id)
+
+        const alreadyIn = get().compares.includes(id)
         if (alreadyIn) {
             try {
                 await axios.delete(`${API_BASE}accounts/profile/compare/${id}/`, { headers: getAuthHeaders() })
-                setCompares(prev => prev.filter(x => x !== id))
+                set({ compares: get().compares.filter((x) => x !== id) })
                 toast.success('Удалено из сравнения')
-                if (onRemoved) onRemoved(id)
+                if (onRemoved) {
+                    onRemoved(id)
+                }
             } catch {
                 toast.error('Не удалось удалить из сравнения')
             }
         } else {
             try {
-                await axios.post(`${API_BASE}accounts/profile/compare/add/`, { property_listing: id }, { headers: getAuthHeaders() })
-                setCompares(prev => [...prev, id])
+                await axios.post(
+                    `${API_BASE}accounts/profile/compare/add/`,
+                    { property_listing: id },
+                    { headers: getAuthHeaders() },
+                )
+                set({ compares: [...get().compares, id] })
                 toast.success('Добавлено в сравнение')
             } catch {
                 toast.error('Не удалось добавить в сравнение')
             }
         }
+    },
+}))
+
+export function useFavoriteCompare() {
+    const favorites = useFavoriteCompareStore((s) => s.favorites)
+    const compares = useFavoriteCompareStore((s) => s.compares)
+    const toggleFavorite = useFavoriteCompareStore((s) => s.toggleFavorite)
+    const toggleCompare = useFavoriteCompareStore((s) => s.toggleCompare)
+
+    useEffect(() => {
+        attachAuthListenerOnce()
+        void useFavoriteCompareStore.getState().hydrateOnce()
     }, [])
+
+    const isFavorite = useCallback((pid) => favorites.includes(normalizeId(pid)), [favorites])
+    const isCompare = useCallback((pid) => compares.includes(normalizeId(pid)), [compares])
 
     return { isFavorite, toggleFavorite, isCompare, toggleCompare }
 }

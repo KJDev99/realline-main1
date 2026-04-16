@@ -7,6 +7,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, EffectFade } from 'swiper/modules';
 import { FiChevronDown, FiMenu, FiX, FiMapPin } from 'react-icons/fi';
 import useApiStore from '@/store/useApiStore';
+import { AUTH_CHANGED_EVENT } from '@/store/useFavoriteCompare';
 import { useRouter } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -143,6 +144,7 @@ export default function Header() {
     const handleLogout = () => {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
+        window.dispatchEvent(new CustomEvent(AUTH_CHANGED_EVENT));
         toast.success('Вы успешно вышли из системы');
         setShowLogoutDialog(false);
         setMobileMenuOpen(false);

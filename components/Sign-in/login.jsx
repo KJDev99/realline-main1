@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import toast, { Toaster } from 'react-hot-toast'
 import { postData } from '@/lib/apiService'
+import { AUTH_CHANGED_EVENT } from '@/store/useFavoriteCompare'
 import Navbar from '../Navbar'
 import Image from 'next/image'
 import HomeLink from '../homeLink'
@@ -46,6 +47,7 @@ export default function Login() {
 
             localStorage.setItem('access_token', data.access)
             localStorage.setItem('refresh_token', data.refresh)
+            window.dispatchEvent(new CustomEvent(AUTH_CHANGED_EVENT))
 
             toast.success('Вы успешно вошли в систему')
             router.push('/profile')

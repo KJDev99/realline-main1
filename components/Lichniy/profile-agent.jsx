@@ -1,5 +1,7 @@
 'use client'
 
+import { AUTH_CHANGED_EVENT } from '@/store/useFavoriteCompare'
+
 import Image from 'next/image'
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
@@ -163,6 +165,7 @@ export default function ProfilAgent() {
     const handleLogout = () => {
         localStorage.removeItem('access_token')
         localStorage.removeItem('refresh_token')
+        window.dispatchEvent(new CustomEvent(AUTH_CHANGED_EVENT))
 
         // Показываем сообщение об успешном выходе
         toast.success('Вы успешно вышли из системы')
