@@ -20,6 +20,9 @@ const CITIES = [
     { label: 'Санкт-Петербург', value: 'spb' },
 ];
 
+const CITY_STORAGE_KEY = 'selected_city';
+const SELECTED_CITY_EVENT = 'selected-city-changed';
+
 export default function Navbar() {
     const router = useRouter();
     const { getData } = useApiStore();
@@ -29,6 +32,7 @@ export default function Navbar() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
     const [selectedCity, setSelectedCity] = useState(CITIES[0]);
+    const [cityHydrated, setCityHydrated] = useState(false);
     const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false); // Mobile uchun alohida state
 
     const dropdownRef = useRef(null);
@@ -48,6 +52,29 @@ export default function Navbar() {
             })
             .catch(() => { });
     }, []);
+
+    useEffect(() => {
+        const savedCityValue = localStorage.getItem(CITY_STORAGE_KEY);
+        const city = CITIES.find((c) => c.value === savedCityValue) || CITIES[0];
+        setSelectedCity(city);
+        setCityHydrated(true);
+    }, []);
+
+    useEffect(() => {
+        if (!cityHydrated) {
+            return;
+        }
+
+        localStorage.setItem(CITY_STORAGE_KEY, selectedCity.value);
+        window.dispatchEvent(
+            new CustomEvent(SELECTED_CITY_EVENT, { detail: { value: selectedCity.value } }),
+        );
+    }, [selectedCity, cityHydrated]);
+
+    const handleCitySelect = (city) => {
+        setSelectedCity(city);
+        setCityDropdownOpen(false);
+    };
 
     // Close real-estate dropdown on outside click (desktop)
     useEffect(() => {
@@ -228,7 +255,7 @@ export default function Navbar() {
                                 {CITIES.map((city) => (
                                     <button
                                         key={city.value}
-                                        onClick={() => { setSelectedCity(city); setCityDropdownOpen(false); }}
+                                        onClick={() => handleCitySelect(city)}
                                         style={{
                                             display: 'flex', alignItems: 'center', gap: 8,
                                             width: '100%', textAlign: 'left',
@@ -383,7 +410,7 @@ export default function Navbar() {
                                     {CITIES.map((city) => (
                                         <button
                                             key={city.value}
-                                            onClick={() => { setSelectedCity(city); setCityDropdownOpen(false); }}
+                                            onClick={() => handleCitySelect(city)}
                                             className="flex items-center gap-3 w-full text-left px-4 py-3 text-[15px] hover:bg-white/10 transition cursor-pointer"
                                             style={{
                                                 color: selectedCity.value === city.value ? '#F05D22' : '#e5e7eb',

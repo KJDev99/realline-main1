@@ -1,11 +1,15 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
+
+const CITY_STORAGE_KEY = 'selected_city';
+const DEFAULT_CITY = 'moscow';
+const SELECTED_CITY_EVENT = 'selected-city-changed';
 
 export default function Home2() {
     const sectionRef = useRef(null);
@@ -13,6 +17,7 @@ export default function Home2() {
     const logoRef = useRef(null);
     const titleRef = useRef(null);
     const subtitleRef = useRef(null);
+    const [selectedCity, setSelectedCity] = useState(DEFAULT_CITY);
 
     useEffect(() => {
         const ctx = gsap.context(() => {
@@ -60,26 +65,55 @@ export default function Home2() {
         return () => ctx.revert();
     }, []);
 
+    useEffect(() => {
+        const syncFromStorage = () => {
+            const savedCity = localStorage.getItem(CITY_STORAGE_KEY) || DEFAULT_CITY;
+            setSelectedCity(savedCity);
+        };
+
+        syncFromStorage();
+
+        const onStorage = (e) => {
+            if (e.key === CITY_STORAGE_KEY || e.key === null) {
+                syncFromStorage();
+            }
+        };
+
+        window.addEventListener('storage', onStorage);
+        window.addEventListener(SELECTED_CITY_EVENT, syncFromStorage);
+
+        return () => {
+            window.removeEventListener('storage', onStorage);
+            window.removeEventListener(SELECTED_CITY_EVENT, syncFromStorage);
+        };
+    }, []);
+
+    const isSpb = selectedCity === 'spb';
+
     return (
         <section ref={sectionRef} className="w-full px-1 py-10">
             <div
                 ref={imgRef}
-                className="relative w-full rounded-2xl overflow-hidden"
+                className="relative w-full rounded-2xl overflow-hidden "
                 style={{ height: '640px' }}
             >
                 <Image
-                    src="/sec1.png"
+                    key={selectedCity}
+                    src={isSpb ? '/secst.jpg' : '/sec1.png'}
                     alt="Реаллайн — недвижимость"
                     fill
                     className="object-cover"
                     priority
                 />
 
-                {/* Dark overlay */}
-                <div className="absolute inset-0 bg-[#1411111A]" />
+                {/* Black/20 + vignette shadow curtain */}
+                <div
+                    className="pointer-events-none absolute inset-0 z-1 bg-black/20 shadow-[inset_0_0_140px_rgba(0,0,0,0.45)]"
+                    aria-hidden
+                />
 
                 {/* Centered content */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-white text-center px-4">
+                <div className="absolute inset-0 z-2 flex flex-col items-center justify-center gap-3 text-white text-center px-4">
                     {/* Logo icon + text */}
                     <div ref={logoRef} className="flex flex-col items-center gap-2">
                         <Image
@@ -92,7 +126,9 @@ export default function Home2() {
 
                     </div>
                     <p ref={titleRef} className="font-normal text-[16px] leading-[100%] tracking-[0%] text-center align-middle text-white/90 mt-1">
-                        Специалисты по недвижимости, в Москве и Московской области
+                        {isSpb
+                            ? 'Специалисты по недвижимости, в Санкт-Петербурге и Ленинградской области'
+                            : 'Специалисты по недвижимости, в Москве и Московской области'}
                     </p>
                 </div>
             </div>

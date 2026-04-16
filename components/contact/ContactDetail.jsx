@@ -1,17 +1,14 @@
 'use client';
 
 import { getData } from '@/lib/apiService';
+import dynamic from 'next/dynamic';
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
 
-// Leaflet marker default icon fix
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+const ContactMap = dynamic(() => import('./ContactMap'), {
+    ssr: false,
+    loading: () => (
+        <div style={{ width: '100%', height: '100%', background: '#E5E7EB', animation: 'pulse 1.4s ease-in-out infinite' }} />
+    ),
 });
 
 function SkeletonLine({ w = '60%', h = 16, mb = 8 }) {
@@ -177,25 +174,11 @@ export default function ContactDetail() {
                         {loading ? (
                             <div style={{ width: '100%', height: '100%', background: '#E5E7EB', animation: 'pulse 1.4s ease-in-out infinite' }} />
                         ) : (
-                            <MapContainer
-                                center={[lat, lng]}
-                                zoom={13}
-                                style={{ height: '100%', width: '100%' }}
-                                zoomControl={true}
-                                attributionControl={false}
-                            >
-                                {/* Grayscale/Black & White tile layer */}
-                                <TileLayer
-                                    url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; CartoDB'
-                                    subdomains="abcd"
-                                />
-                                <Marker position={[lat, lng]}>
-                                    <Popup>
-                                        {contacts?.address || 'Bizning ofis'}
-                                    </Popup>
-                                </Marker>
-                            </MapContainer>
+                            <ContactMap
+                                lat={lat}
+                                lng={lng}
+                                popupText={contacts?.address || 'Bizning ofis'}
+                            />
                         )}
                     </div>
                 </div>

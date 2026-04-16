@@ -27,6 +27,13 @@ const CITIES = [
     { label: 'Санкт-Петербург', value: 'spb' },
 ];
 
+const CITY_STORAGE_KEY = 'selected_city';
+const SELECTED_CITY_EVENT = 'selected-city-changed';
+const CITY_TO_REGION = {
+    moscow: 1,
+    spb: 2,
+};
+
 export default function Header() {
     const router = useRouter();
     const swiperRef = useRef(null);
@@ -38,6 +45,7 @@ export default function Header() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
     const [selectedCity, setSelectedCity] = useState(CITIES[0]);
+    const [cityHydrated, setCityHydrated] = useState(false);
     const [showLogoutDialog, setShowLogoutDialog] = useState(false);
     const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false);
 
@@ -50,13 +58,6 @@ export default function Header() {
         const token = localStorage.getItem('access_token');
         setIsAuthenticated(!!token);
 
-        getData('site/hero-slides/')
-            .then(data => {
-                const list = Array.isArray(data) ? data : data?.results || [];
-                setSlides([...list].sort((a, b) => a.sort_order - b.sort_order));
-            })
-            .catch(() => { });
-
         getData('accounts/catalog/categories/')
             .then((data) => {
                 const sorted = (Array.isArray(data) ? data : data.results ?? [])
@@ -65,6 +66,33 @@ export default function Header() {
             })
             .catch(() => { });
     }, []);
+
+    // localStorage faqat clientda — birinchi SSR render bilan moslashishi uchun keyinroq o‘qiladi
+    useEffect(() => {
+        const savedCityValue = localStorage.getItem(CITY_STORAGE_KEY);
+        const city = CITIES.find((c) => c.value === savedCityValue) || CITIES[0];
+        setSelectedCity(city);
+        setCityHydrated(true);
+    }, []);
+
+    useEffect(() => {
+        if (!cityHydrated) {
+            return;
+        }
+
+        localStorage.setItem(CITY_STORAGE_KEY, selectedCity.value);
+        window.dispatchEvent(
+            new CustomEvent(SELECTED_CITY_EVENT, { detail: { value: selectedCity.value } }),
+        );
+
+        const selectedRegion = CITY_TO_REGION[selectedCity.value] ?? 1;
+        getData(`site/hero-slides/?site_region=${selectedRegion}`)
+            .then(data => {
+                const list = Array.isArray(data) ? data : data?.results || [];
+                setSlides([...list].sort((a, b) => a.sort_order - b.sort_order));
+            })
+            .catch(() => { });
+    }, [getData, selectedCity, cityHydrated]);
 
     // Close real-estate dropdown on outside click
     useEffect(() => {
