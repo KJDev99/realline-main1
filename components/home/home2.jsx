@@ -76,7 +76,7 @@ export default function Home2() {
                 />
 
                 {/* Dark overlay */}
-                <div className="absolute inset-0 bg-black/30" />
+                <div className="absolute inset-0 bg-[#1411111A]" />
 
                 {/* Centered content */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-white text-center px-4">
@@ -89,7 +89,7 @@ export default function Home2() {
                             height={95.8643798828125}
                             className=""
                         />
-                       
+
                     </div>
                     <p ref={titleRef} className="font-normal text-[16px] leading-[100%] tracking-[0%] text-center align-middle text-white/90 mt-1">
                         Специалисты по недвижимости, в Москве и Московской области

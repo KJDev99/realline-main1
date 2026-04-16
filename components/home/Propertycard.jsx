@@ -13,10 +13,7 @@ export default function PropertyCard({ property, onFavoriteRemoved, onCompareRem
     const { isFavorite, toggleFavorite, isCompare, toggleCompare } = useFavoriteCompare()
     const [activeSlide, setActiveSlide] = useState(0)
 
-    const {
-        id, name, price, district, highway, area,
-        images: rawImages, tags,
-    } = property
+    const { id, name, price, district, highway, area, images: rawImages, tags } = property
 
     const images = rawImages?.length > 0 ? rawImages : [{ image: '/sec2.png' }]
     const favActive = isFavorite(id)
@@ -25,7 +22,11 @@ export default function PropertyCard({ property, onFavoriteRemoved, onCompareRem
     return (
         <div className="flex flex-col gap-3 select-none">
             {/* ── Image block ── */}
-            <div className="relative rounded-2xl overflow-hidden" style={{ aspectRatio: '1 / 0.75' }}>
+            <div
+                className="relative rounded-2xl overflow-hidden"
+                style={{ aspectRatio: '1 / 0.75' }}
+                onMouseLeave={() => setActiveSlide(0)}  // ✅ Container darajasida
+            >
                 {images.map((src, i) => (
                     <Image
                         key={i}
@@ -36,9 +37,22 @@ export default function PropertyCard({ property, onFavoriteRemoved, onCompareRem
                     />
                 ))}
 
+                {/* Hover zones */}
+                {images.length > 1 && (
+                    <div className="absolute inset-0 flex z-10">
+                        {images.map((_, i) => (
+                            <div
+                                key={i}
+                                className="flex-1 h-full"
+                                onMouseEnter={() => setActiveSlide(i)}
+                            // ✅ onMouseLeave bu yerdan olib tashlandi
+                            />
+                        ))}
+                    </div>
+                )}
+
                 {/* Action buttons */}
-                <div className="absolute top-3 right-3 z-10 flex gap-2">
-                    {/* Favorite */}
+                <div className="absolute top-3 right-3 z-20 flex gap-2">
                     <button
                         onClick={e => {
                             e.stopPropagation()
@@ -51,8 +65,6 @@ export default function PropertyCard({ property, onFavoriteRemoved, onCompareRem
                             : <FiHeart size={15} className="text-gray-500" />
                         }
                     </button>
-
-                    {/* Compare */}
                     <button
                         onClick={e => {
                             e.stopPropagation()
@@ -66,20 +78,6 @@ export default function PropertyCard({ property, onFavoriteRemoved, onCompareRem
                         />
                     </button>
                 </div>
-
-                {/* Hover zones for image switching */}
-                {images.length > 1 && (
-                    <div className="absolute inset-0 flex z-10">
-                        {images.map((_, i) => (
-                            <div
-                                key={i}
-                                className="flex-1 h-full"
-                                onMouseEnter={() => setActiveSlide(i)}
-                                onMouseLeave={() => setActiveSlide(0)}
-                            />
-                        ))}
-                    </div>
-                )}
 
                 {/* Dots */}
                 {images.length > 1 && (

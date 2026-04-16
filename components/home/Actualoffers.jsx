@@ -9,6 +9,7 @@ import { FaHeart } from 'react-icons/fa';
 
 import 'swiper/css';
 import { getData } from '@/lib/apiService';
+import { useRouter } from 'next/navigation';
 
 // ─── Zustand store (mavjud store'ingizga qo'shing) ───────────────────────────
 // import { usePropertyStore } from '@/store/propertyStore';
@@ -19,7 +20,7 @@ function formatPrice(price) {
     return Number(price).toLocaleString('ru-RU');
 }
 
-function PropertyCard({ property }) {
+function PropertyCard({ property, aksiya }) {
     const [activeSlide, setActiveSlide] = useState(0);
     const [liked, setLiked] = useState(property.is_favourite);
     const [compared, setCompared] = useState(property.is_compare);
@@ -45,8 +46,12 @@ function PropertyCard({ property }) {
                     />
                 ))}
 
+                {
+                    aksiya && <div className='absolute left-4 top-4 bg-[#DF3505] text-sm text-[#FFFFFF] rounded-full py-2.5 px-5'>Акция</div>
+                }
+
                 {/* Action buttons */}
-                <div className="absolute top-3 right-3 z-10 flex gap-2">
+                <div className="absolute top-4 right-4 z-10 flex gap-2">
                     <button
                         onClick={() => setLiked(!liked)}
                         className="w-9 h-9 rounded-full bg-white flex items-center justify-center shadow hover:scale-105 transition-transform"
@@ -141,7 +146,7 @@ export default function ActualOffers() {
     const swiperRef = useRef(null);
     const [properties, setProperties] = useState([]);
     const [loading, setLoading] = useState(true);
-
+    const router = useRouter();
     useEffect(() => {
         const fetchProperties = async () => {
             try {
@@ -156,6 +161,10 @@ export default function ActualOffers() {
 
         fetchProperties();
     }, []);
+
+    const handleCardClick = (property) => {
+        router.push(`/catalog/${property.id}`);
+    };
 
     return (
         <section className="w-full py-12 px-5 md:px-10 bg-white rounded-2xl max-w-350 mx-auto">
@@ -199,8 +208,8 @@ export default function ActualOffers() {
                         </SwiperSlide>
                     ))
                     : properties.map((property) => (
-                        <SwiperSlide key={property.id}>
-                            <PropertyCard property={property} />
+                        <SwiperSlide key={property.id} onClick={() => handleCardClick(property)} style={{ cursor: 'pointer' }}>
+                            <PropertyCard aksiya={true} property={property} />
                         </SwiperSlide>
                     ))
                 }

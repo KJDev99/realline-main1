@@ -66,7 +66,7 @@ export default function AllCompare() {
     return (
         <>
             <div className="max-w-350 mx-auto px-5 mb-[100px] mt-0 ">
-                <h2 className='text-[36px] mb-7 text-[#141111]'>Сравнение объектов</h2>
+                <h2 className='text-[36px] mb-7 text-[#141111] max-md:text-[26px] max-md:mb-4'>Сравнение объектов</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 
                     {properties.map(property => (

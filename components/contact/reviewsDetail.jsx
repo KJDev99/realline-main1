@@ -46,7 +46,6 @@ export default function ReviewsDetail() {
                                 key={review.id}
                                 style={{
                                     background: '#141111',
-
                                     borderRadius: 12,
                                     padding: '20px',
                                     display: 'flex',

@@ -2,6 +2,17 @@
 
 import { getData } from '@/lib/apiService';
 import React, { useEffect, useState } from 'react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Leaflet marker default icon fix
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 function SkeletonLine({ w = '60%', h = 16, mb = 8 }) {
     return (
@@ -28,10 +39,8 @@ export default function ContactDetail() {
         }).finally(() => setLoading(false));
     }, []);
 
-    // Map center: geo dan yoki contacts addressdan default Moscow
     const lat = geo?.latitude ?? 55.7558;
     const lng = geo?.longitude ?? 37.6173;
-    const mapSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${lng - 0.3}%2C${lat - 0.2}%2C${lng + 0.3}%2C${lat + 0.2}&layer=mapnik&marker=${lat}%2C${lng}`;
 
     return (
         <>
@@ -41,7 +50,7 @@ export default function ContactDetail() {
                     Контакты
                 </h1>
 
-                <div style={{ display: 'flex', gap: 32, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                <div className='grid grid-cols-2 max-md:grid-cols-1 gap-6'>
 
                     {/* LEFT — contact info */}
                     <div style={{
@@ -79,7 +88,6 @@ export default function ContactDetail() {
                             </>
                         ) : (
                             <>
-                                {/* Phone */}
                                 {contacts?.phone && (
                                     <div>
                                         <p style={{ fontSize: 13, color: '#9CA3AF', margin: '0 0 6px' }}>Телефон</p>
@@ -92,7 +100,6 @@ export default function ContactDetail() {
                                     </div>
                                 )}
 
-                                {/* Email */}
                                 {contacts?.email && (
                                     <div>
                                         <p style={{ fontSize: 13, color: '#9CA3AF', margin: '0 0 6px' }}>Электронная почта</p>
@@ -105,7 +112,6 @@ export default function ContactDetail() {
                                     </div>
                                 )}
 
-                                {/* Office + hours */}
                                 {(contacts?.address || contacts?.work_hours) && (
                                     <div>
                                         <p style={{ fontSize: 13, color: '#9CA3AF', margin: '0 0 6px' }}>Офис</p>
@@ -118,7 +124,6 @@ export default function ContactDetail() {
                                     </div>
                                 )}
 
-                                {/* Social */}
                                 {(contacts?.telegram_url || contacts?.vk_url) && (
                                     <div>
                                         <p style={{ fontSize: 13, color: '#9CA3AF', margin: '0 0 10px' }}>Соц. сети</p>
@@ -130,8 +135,8 @@ export default function ContactDetail() {
                                                     rel="noopener noreferrer"
                                                     style={{
                                                         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                                                        width: 44, height: 36, borderRadius: 8,
-                                                        background: '#E5E7EB', color: '#111827',
+                                                        width: 44, height: 44, borderRadius: 22,
+                                                        background: '#fff', color: '#111827',
                                                         fontSize: 14, fontWeight: 500, textDecoration: 'none',
                                                     }}
                                                 >
@@ -145,8 +150,8 @@ export default function ContactDetail() {
                                                     rel="noopener noreferrer"
                                                     style={{
                                                         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                                                        width: 44, height: 36, borderRadius: 8,
-                                                        background: '#E5E7EB', color: '#111827',
+                                                        width: 44, height: 44, borderRadius: 22,
+                                                        background: '#fff', color: '#111827',
                                                         fontSize: 14, fontWeight: 500, textDecoration: 'none',
                                                     }}
                                                 >
@@ -160,7 +165,7 @@ export default function ContactDetail() {
                         )}
                     </div>
 
-                    {/* RIGHT — map */}
+                    {/* RIGHT — map (Grayscale) */}
                     <div style={{
                         flex: '2 1 460px',
                         height: 420,
@@ -172,14 +177,25 @@ export default function ContactDetail() {
                         {loading ? (
                             <div style={{ width: '100%', height: '100%', background: '#E5E7EB', animation: 'pulse 1.4s ease-in-out infinite' }} />
                         ) : (
-                            <iframe
-                                src={mapSrc}
-                                width="100%"
-                                height="100%"
-                                style={{ border: 'none', display: 'block' }}
-                                title="Карта офиса"
-                                loading="lazy"
-                            />
+                            <MapContainer
+                                center={[lat, lng]}
+                                zoom={13}
+                                style={{ height: '100%', width: '100%' }}
+                                zoomControl={true}
+                                attributionControl={false}
+                            >
+                                {/* Grayscale/Black & White tile layer */}
+                                <TileLayer
+                                    url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; CartoDB'
+                                    subdomains="abcd"
+                                />
+                                <Marker position={[lat, lng]}>
+                                    <Popup>
+                                        {contacts?.address || 'Bizning ofis'}
+                                    </Popup>
+                                </Marker>
+                            </MapContainer>
                         )}
                     </div>
                 </div>

@@ -14,7 +14,7 @@ export default function AboutInfo() {
             `}</style>
 
             <div className='max-w-[1400px] mt-[60px] lg:mt-[100px] mx-auto px-4'>
-                <h2 className='about-info-title text-[#141111] mb-6'>Наш подход к работе</h2>
+                <h2 className='about-info-title text-[#141111] mb-6'>О компании</h2>
 
                 <div className="about-info-grid">
                     <div className="p-5 lg:p-6 bg-[#FAFAFA] rounded-[20px]">

@@ -18,11 +18,11 @@ export default function AboutWork() {
                 .card-desc { font-size: 16px; line-height: 130%; }
 
                 @media (max-width: 1023px) {
-                    .about-work-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 16px !important; }
+                    .about-work-grid { grid-template-columns: repeat(1, 1fr) !important; gap: 16px !important; }
                     .about-work-card { height: auto !important; min-height: 180px; }
                 }
                 @media (max-width: 767px) {
-                    .about-work-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+                    .about-work-grid { grid-template-columns: repeat(1, 1fr) !important; gap: 10px !important; }
                     .about-work-card { min-height: 150px !important; padding: 14px !important; }
                     .card-title { padding: 12px 0 !important; font-size: 15px !important; }
                     .card-desc { font-size: 12px !important; }

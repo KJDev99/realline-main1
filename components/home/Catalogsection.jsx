@@ -15,12 +15,6 @@ const BOOL_TAGS = [
 
 const PAGE_LIMIT = 9;
 
-const SelectIcon = () => (
-    <svg width="12" height="7" viewBox="0 0 12 7" fill="none">
-        <path d="M1 1L6 6L11 1" stroke="#999" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-);
-
 function parseParams(searchParams) {
     return {
         category: searchParams.get('category') || '',
@@ -113,33 +107,29 @@ function isLandPlot(categories, selectedCategoryId) {
     return cat?.slug === 'land_plot';
 }
 
-// ─── SearchableSelect component ───────────────────────────────────────────────
 function SearchableSelect({ label, value, onChange, options, placeholder, className = '' }) {
-    const [open, setOpen] = useState(false)
-    const [search, setSearch] = useState('')
-    const ref = useRef(null)
+    const [open, setOpen] = useState(false);
+    const [search, setSearch] = useState('');
+    const ref = useRef(null);
 
     useEffect(() => {
         const handler = (e) => {
-            if (ref.current && !ref.current.contains(e.target)) setOpen(false)
-        }
-        document.addEventListener('mousedown', handler)
-        return () => document.removeEventListener('mousedown', handler)
-    }, [])
+            if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
 
     useEffect(() => {
         if (open) {
-            setTimeout(() => ref.current?.querySelector('input')?.focus(), 40)
+            setTimeout(() => ref.current?.querySelector('input')?.focus(), 40);
         } else {
-            setSearch('')
+            setSearch('');
         }
-    }, [open])
+    }, [open]);
 
-    const selected = options.find(o => String(o.value) === String(value))
-
-    const filtered = options.filter(o =>
-        o.label.toLowerCase().includes(search.toLowerCase())
-    )
+    const selected = options.find(o => String(o.value) === String(value));
+    const filtered = options.filter(o => o.label.toLowerCase().includes(search.toLowerCase()));
 
     return (
         <div className={`flex flex-col gap-2 ${className}`} ref={ref}>
@@ -153,14 +143,11 @@ function SearchableSelect({ label, value, onChange, options, placeholder, classN
                     <span className={selected ? 'text-[#141111]' : 'text-[#aaa]'}>
                         {selected ? selected.label : placeholder}
                     </span>
-                    <svg
-                        width='12' height='7' viewBox='0 0 12 7' fill='none'
-                        className={`transition-transform flex-shrink-0 ${open ? 'rotate-180' : ''}`}
-                    >
+                    <svg width='12' height='7' viewBox='0 0 12 7' fill='none'
+                        className={`transition-transform flex-shrink-0 ${open ? 'rotate-180' : ''}`}>
                         <path d='M1 1L6 6L11 1' stroke='#999' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round' />
                     </svg>
                 </button>
-
                 {open && (
                     <div className='absolute z-50 w-full mt-1 bg-white border border-[#E5E5E5] rounded-[10px] shadow-md overflow-hidden'>
                         <div className='px-3 py-2 border-b border-[#E5E5E5]'>
@@ -176,7 +163,7 @@ function SearchableSelect({ label, value, onChange, options, placeholder, classN
                             {filtered.length > 0 ? filtered.map(opt => (
                                 <div
                                     key={opt.value}
-                                    onClick={() => { onChange(opt.value); setOpen(false) }}
+                                    onClick={() => { onChange(opt.value); setOpen(false); }}
                                     className={`px-4 py-[10px] text-[14px] cursor-pointer hover:bg-[#F4F5F5]
                                         ${String(opt.value) === String(value) ? 'font-semibold text-[#141111]' : 'text-[#444]'}`}
                                 >
@@ -190,10 +177,9 @@ function SearchableSelect({ label, value, onChange, options, placeholder, classN
                 )}
             </div>
         </div>
-    )
+    );
 }
 
-// ─── Inner component (uses useSearchParams) ───────────────────────────────────
 function CatalogInner() {
     const router = useRouter();
     const pathname = usePathname();
@@ -209,6 +195,12 @@ function CatalogInner() {
     const [loading, setLoading] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
     const [error, setError] = useState(null);
+
+    // ── Mobile filter accordion state ──
+    const [mobileExpanded, setMobileExpanded] = useState(false);
+    const [isAnimating, setIsAnimating] = useState(false);
+    const expandedContentRef = useRef(null);
+    const [expandedHeight, setExpandedHeight] = useState(0);
 
     const initFilters = parseParams(searchParams);
     const [filters, setFilters] = useState(initFilters);
@@ -243,6 +235,22 @@ function CatalogInner() {
         offsetRef.current = parsed.offset;
         fetchProperties(parsed, 0, false);
     }, [searchParams]); // eslint-disable-line
+
+    // Measure expanded content height for animation
+    useEffect(() => {
+        if (expandedContentRef.current) {
+            setExpandedHeight(expandedContentRef.current.scrollHeight);
+        }
+    }, [mobileExpanded, categories, highways, filters]);
+
+    const toggleMobileFilter = () => {
+        setIsAnimating(true);
+        if (expandedContentRef.current) {
+            setExpandedHeight(expandedContentRef.current.scrollHeight);
+        }
+        setMobileExpanded(prev => !prev);
+        setTimeout(() => setIsAnimating(false), 350);
+    };
 
     const pushFilters = (newFilters) => {
         router.push(`${pathname}?${buildURLParams(newFilters).toString()}`);
@@ -291,52 +299,42 @@ function CatalogInner() {
         <>
             <style>{`
                 @keyframes catalog-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+                .mobile-filter-expanded {
+                    overflow: hidden;
+                    transition: max-height 0.35s ease, opacity 0.35s ease;
+                }
             `}</style>
 
             <section className="w-full px-4 sm:px-6 md:px-10 py-10 md:py-12 max-w-350 mx-auto">
                 <h2 className="text-[24px] md:text-[30px] mb-6 md:mb-8">Каталог недвижимости</h2>
 
-                {/* FILTERS */}
-                <div className="flex flex-col md:flex-row flex-wrap gap-4 md:gap-6 mb-4">
-
+                {/* ── DESKTOP FILTERS (md+) ── */}
+                <div className="hidden md:flex flex-row flex-wrap gap-4 md:gap-6 mb-4">
                     <SearchableSelect
                         label='Тип недвижимости:'
                         value={filters.category}
                         onChange={v => handleFilterChange('category', v)}
-                        options={[
-                            { value: '', label: 'Все типы' },
-                            ...categories.map(c => ({ value: c.id, label: c.name }))
-                        ]}
+                        options={[{ value: '', label: 'Все типы' }, ...categories.map(c => ({ value: c.id, label: c.name }))]}
                         placeholder='Все типы'
-                        className='w-full sm:w-[48%] md:w-[240px]'
+                        className='w-[240px]'
                     />
-
                     <SearchableSelect
                         label='Выберите район:'
                         value={filters.district}
                         onChange={v => handleFilterChange('district', v)}
-                        options={[
-                            { value: '', label: 'Все районы' },
-                            ...districts.map(d => ({ value: d.id, label: d.name }))
-                        ]}
+                        options={[{ value: '', label: 'Все районы' }, ...districts.map(d => ({ value: d.id, label: d.name }))]}
                         placeholder='Все районы'
-                        className='w-full sm:w-[48%] md:w-[240px]'
+                        className='w-[240px]'
                     />
-
                     <SearchableSelect
                         label='Выберите шоссе:'
                         value={filters.highway}
                         onChange={v => handleFilterChange('highway', v)}
-                        options={[
-                            { value: '', label: 'Все шоссе' },
-                            ...highways.map(h => ({ value: h.id, label: h.name }))
-                        ]}
+                        options={[{ value: '', label: 'Все шоссе' }, ...highways.map(h => ({ value: h.id, label: h.name }))]}
                         placeholder='Все шоссе'
-                        className='hidden md:flex w-full sm:w-[48%] md:w-[240px]'
+                        className='w-[240px]'
                     />
-
-                    {/* Площадь — faqat lg da ko'rinadi */}
-                    <div className="hidden lg:flex flex-col w-full sm:w-[48%] md:w-auto">
+                    <div className="hidden lg:flex flex-col w-auto">
                         <p className="text-[13px] md:text-[14px] mb-2">
                             {landPlotSelected ? 'Площадь участка, сот.:' : 'Площадь, м²:'}
                         </p>
@@ -344,9 +342,9 @@ function CatalogInner() {
                             <select
                                 value={landPlotSelected ? filters.land_area_max : filters.area_max}
                                 onChange={e => {
-                                    const key = landPlotSelected ? 'land_area_max' : 'area_max'
-                                    const next = { ...filters, [key]: e.target.value }
-                                    setFilters(next); pushFilters(next)
+                                    const key = landPlotSelected ? 'land_area_max' : 'area_max';
+                                    const next = { ...filters, [key]: e.target.value };
+                                    setFilters(next); pushFilters(next);
                                 }}
                                 className="w-[130px] h-[48px] md:h-[56px] bg-[#F4F5F5] px-4 rounded-[10px] text-[14px] md:text-[16px] outline-none appearance-none cursor-pointer"
                             >
@@ -357,24 +355,22 @@ function CatalogInner() {
                             </select>
                         </div>
                     </div>
-
-                    {/* Стоимость */}
-                    <div className="hidden lg:flex flex-col w-full sm:w-[48%] md:w-auto">
+                    <div className="hidden lg:flex flex-col w-auto">
                         <p className="text-[13px] md:text-[14px] mb-2">Стоимость:</p>
-                        <div className="flex gap-3 mt-auto">
+                        <div className="flex gap-3 mt-auto ">
                             <input type="number" placeholder="От" value={filters.price_min}
                                 onChange={e => setFilters(f => ({ ...f, price_min: e.target.value }))}
                                 onBlur={handlePriceBlur} onKeyDown={handlePriceKeyDown}
-                                className="w-full md:w-[100px] h-[48px] md:h-[56px] bg-[#F4F5F5] px-4 rounded-[10px] text-sm outline-none" />
+                                className="w-[100px] h-[48px] md:h-[56px] bg-[#F4F5F5] px-4 rounded-[10px] text-sm outline-none" />
                             <input type="number" placeholder="До" value={filters.price_max}
                                 onChange={e => setFilters(f => ({ ...f, price_max: e.target.value }))}
                                 onBlur={handlePriceBlur} onKeyDown={handlePriceKeyDown}
-                                className="w-full md:w-[100px] h-[48px] md:h-[56px] bg-[#F4F5F5] px-4 rounded-[10px] text-sm outline-none" />
+                                className="w-[100px] h-[48px] md:h-[56px] bg-[#F4F5F5] px-4 rounded-[10px] text-sm outline-none" />
                         </div>
                     </div>
                 </div>
 
-                {/* BOOL TAGS */}
+                {/* ── DESKTOP BOOL TAGS ── */}
                 <div className="hidden lg:flex flex-wrap gap-3 md:gap-4 mb-2 md:mb-4">
                     {BOOL_TAGS.map(({ key, label }) => (
                         <button key={key} onClick={() => toggleTag(key)}
@@ -384,8 +380,114 @@ function CatalogInner() {
                     ))}
                 </div>
 
+                {/* ── MOBILE FILTERS ── */}
+                <div className="flex md:hidden flex-col gap-3 mb-4">
+                    {/* Always visible: 2 selects */}
+                    <SearchableSelect
+                        label='Тип недвижимости:'
+                        value={filters.category}
+                        onChange={v => handleFilterChange('category', v)}
+                        options={[{ value: '', label: 'Все типы' }, ...categories.map(c => ({ value: c.id, label: c.name }))]}
+                        placeholder='Все типы'
+                        className='w-full'
+                    />
+                    <SearchableSelect
+                        label='Выберите район:'
+                        value={filters.district}
+                        onChange={v => handleFilterChange('district', v)}
+                        options={[{ value: '', label: 'Все районы' }, ...districts.map(d => ({ value: d.id, label: d.name }))]}
+                        placeholder='Все районы'
+                        className='w-full'
+                    />
+
+                    {/* Expandable section */}
+                    <div
+                        className="mobile-filter-expanded"
+                        style={{
+                            maxHeight: mobileExpanded ? `${expandedHeight}px` : '0px',
+                            opacity: mobileExpanded ? 1 : 0,
+                        }}
+                    >
+                        <div ref={expandedContentRef} className="flex flex-col gap-3 pt-1">
+                            <SearchableSelect
+                                label='Выберите шоссе:'
+                                value={filters.highway}
+                                onChange={v => handleFilterChange('highway', v)}
+                                options={[{ value: '', label: 'Все шоссе' }, ...highways.map(h => ({ value: h.id, label: h.name }))]}
+                                placeholder='Все шоссе'
+                                className='w-full'
+                            />
+                            {/* Площадь */}
+                            <div className="flex flex-col gap-2">
+                                <p className="text-[13px]">
+                                    {landPlotSelected ? 'Площадь участка, сот.:' : 'Площадь, м²:'}
+                                </p>
+                                <select
+                                    value={landPlotSelected ? filters.land_area_max : filters.area_max}
+                                    onChange={e => {
+                                        const key = landPlotSelected ? 'land_area_max' : 'area_max';
+                                        const next = { ...filters, [key]: e.target.value };
+                                        setFilters(next); pushFilters(next);
+                                    }}
+                                    className="w-full h-[48px] bg-[#F4F5F5] px-4 rounded-[10px] text-[14px] outline-none appearance-none cursor-pointer"
+                                >
+                                    <option value="">До</option>
+                                    {landPlotSelected
+                                        ? [6, 10, 15, 20, 30, 50].map(v => <option key={v} value={v}>До {v} сот.</option>)
+                                        : [40, 60, 80, 100, 120, 150, 200].map(v => <option key={v} value={v}>До {v} м²</option>)}
+                                </select>
+                            </div>
+                            {/* Стоимость */}
+                            <div className="flex flex-col gap-2">
+                                <p className="text-[13px]">Стоимость:</p>
+                                <div className="flex gap-3 max-md:grid max-md:grid-cols-2">
+                                    <input type="number" placeholder="От" value={filters.price_min}
+                                        onChange={e => setFilters(f => ({ ...f, price_min: e.target.value }))}
+                                        onBlur={handlePriceBlur} onKeyDown={handlePriceKeyDown}
+                                        className="flex-1 h-[48px] bg-[#F4F5F5] px-4 rounded-[10px] text-sm outline-none" />
+                                    <input type="number" placeholder="До" value={filters.price_max}
+                                        onChange={e => setFilters(f => ({ ...f, price_max: e.target.value }))}
+                                        onBlur={handlePriceBlur} onKeyDown={handlePriceKeyDown}
+                                        className="flex-1 h-[48px] bg-[#F4F5F5] px-4 rounded-[10px] text-sm outline-none" />
+                                </div>
+                            </div>
+                            {/* Bool tags */}
+                            <div className="flex flex-wrap gap-2 pb-1">
+                                {BOOL_TAGS.map(({ key, label }) => (
+                                    <button key={key} onClick={() => toggleTag(key)}
+                                        className={`px-3 py-2 rounded-full text-[14px] transition ${filters[key] ? 'bg-gray-900 text-white' : 'bg-[#F4F5F5]'}`}>
+                                        {label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Expand / Collapse + Clear row */}
+                    <div className="flex items-center justify-center gap-6 mt-1">
+                        <button
+                            onClick={toggleMobileFilter}
+                            className="text-[13px] text-[#14111180] flex items-center gap-1"
+                        >
+                            {mobileExpanded ? 'Свернуть фильтр' : 'Развернуть фильтр'}
+                            <svg
+                                width="12" height="7" viewBox="0 0 12 7" fill="none"
+                                className={`transition-transform duration-300 ${mobileExpanded ? 'rotate-180' : ''}`}
+                            >
+                                <path d="M1 1L6 6L11 1" stroke="#14111180" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                        </button>
+                        {hasActiveFilters() && (
+                            <button onClick={clearFilters} className="text-[13px] text-[#14111180] flex items-center gap-1">
+                                Очистить фильтр <span>×</span>
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {/* ── DESKTOP clear filter ── */}
                 {hasActiveFilters() && (
-                    <div className="flex justify-end gap-4 mb-2">
+                    <div className="hidden md:flex justify-end gap-4 mb-2">
                         <button onClick={clearFilters} className="text-[13px] md:text-[14px] text-[#14111180] flex items-center gap-1">
                             Очистить фильтр <span>×</span>
                         </button>
@@ -433,7 +535,6 @@ function CatalogInner() {
     );
 }
 
-// ─── Wrapper with Suspense — fixes useSearchParams build error ────────────────
 export default function CatalogSection() {
     return (
         <Suspense fallback={
@@ -443,5 +544,5 @@ export default function CatalogSection() {
         }>
             <CatalogInner />
         </Suspense>
-    )
+    );
 }

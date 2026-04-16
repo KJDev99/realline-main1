@@ -8,7 +8,7 @@ export default function page() {
     return (
         <div>
             <Navbar />
-            <HomeLink link={'/favorite'} label={'Favorite'} link2='' label2="" />
+            <HomeLink link={'/favorite'} label={'Избранное'} link2='' label2="" />
             <AllFavorite />
             <ContactForm />
         </div>

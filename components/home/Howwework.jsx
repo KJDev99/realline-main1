@@ -38,6 +38,18 @@ const STEPS = [
 const GRADIENT = 'linear-gradient(90deg, #F05D22 0%, #DF3505 35.22%, #F13F03 68.86%, #F94A0B 100%)';
 const GRADIENT_VERTICAL = 'linear-gradient(180deg, #F05D22 0%, #DF3505 35.22%, #F13F03 68.86%, #F94A0B 100%)';
 
+// Step width calculator
+const getStepWidth = (index, total) => {
+    if (total === 5) {
+        if (index === 0 || index === total - 1) {
+            return '16%'; // first and last
+        } else {
+            return '22.666%'; // middle three: (100 - 32) / 3 = 22.666%
+        }
+    }
+    return `${100 / total}%`;
+};
+
 export default function HowWeWork() {
     const sectionRef = useRef(null);
     const [animated, setAnimated] = useState(false);
@@ -67,8 +79,8 @@ export default function HowWeWork() {
         .hww-line-track {
           position: absolute;
           top: 43px;
-          left: 43px;
-          right: 43px;
+          left: 86px;
+          right: 86px;
           height: 2px;
           background: #E5E7EB;
           z-index: 0;
@@ -106,98 +118,95 @@ export default function HowWeWork() {
         .hww-vline-fill.run { height: 100%; }
       `}</style>
 
-            <section ref={sectionRef} className="w-full bg-white md:py-20  px-5 md:px-10 max-w-350 mx-auto">
-                {/* Title */}
-                <div className="flex justify-center mb-14">
-                    <h2 className="text-gray-900 text-3xl md:text-4xl font-light text-center">
-                        Как мы работаем
-                    </h2>
-                </div>
-
-                {/* ── DESKTOP layout (md+) ── */}
-                <div className="relative max-w-[1296px] mx-auto hidden md:block">
-                    <div className="hww-line-track">
-                        <div className={`hww-line-fill ${animated ? 'run' : ''}`} />
+            <section ref={sectionRef} className="w-full bg-white md:py-20 px-5 md:px-10">
+                <div className="max-w-[1296px] mx-auto">
+                    {/* Title */}
+                    <div className="flex justify-center mb-14">
+                        <h2 className="text-gray-900 text-3xl md:text-4xl font-light text-center">
+                            Как мы работаем
+                        </h2>
                     </div>
 
-                    <div className="relative z-10 flex items-start justify-between">
-                        {STEPS.map((step, i) => (
-                            <div
-                                key={i}
-                                className="flex flex-col"
-                                style={{
-                                    alignItems:
-                                        step.align === 'start' ? 'flex-start'
+                    {/* ── DESKTOP layout (md+) ── */}
+                    <div className="relative hidden md:block">
+                        <div className="hww-line-track">
+                            <div className={`hww-line-fill ${animated ? 'run' : ''}`} />
+                        </div>
+
+                        <div className="relative z-10 flex items-start">
+                            {STEPS.map((step, i) => (
+                                <div
+                                    key={i}
+                                    className="flex flex-col"
+                                    style={{
+                                        width: getStepWidth(i, STEPS.length),
+                                        alignItems: step.align === 'start' ? 'flex-start'
                                             : step.align === 'end' ? 'flex-end'
                                                 : 'center',
-                                    width: `${100 / STEPS.length}%`,
-                                    textAlign:
-                                        step.align === 'start' ? 'left'
+                                        textAlign: step.align === 'start' ? 'left'
                                             : step.align === 'end' ? 'right'
                                                 : 'center',
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        width: 86, height: 86,
-                                        borderRadius: '50%',
-                                        background: GRADIENT,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        marginBottom: 20,
-                                        flexShrink: 0,
                                     }}
                                 >
-                                    <span className="text-[30px] text-white">{step.num}</span>
-                                </div>
-                                <h3 className="font-medium text-[20px] leading-[100%] tracking-[0%]">
-                                    {step.title}
-                                </h3>
-                                <p className="font-normal text-[16px] leading-[130%] tracking-[0%] text-[#141111] mt-[15px]">
-                                    {step.desc}
-                                </p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* ── MOBILE layout (< md) ── */}
-                <div className="relative max-w-[480px] mx-auto md:hidden">
-                    {/* vertical track */}
-                    <div className="hww-vline-track">
-                        <div className={`hww-vline-fill ${animated ? 'run' : ''}`} />
-                    </div>
-
-                    <div className="relative z-10 flex flex-col gap-10">
-                        {STEPS.map((step, i) => (
-                            <div key={i} className="flex items-start gap-5">
-                                {/* Circle (always left, sits on top of the line) */}
-                                <div
-                                    style={{
-                                        width: 86, height: 86,
-                                        borderRadius: '50%',
-                                        background: GRADIENT,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        flexShrink: 0,
-                                    }}
-                                >
-                                    <span className="text-[26px] text-white">{step.num}</span>
-                                </div>
-
-                                {/* Text */}
-                                <div className="flex flex-col justify-center pt-5">
-                                    <h3 className="font-medium text-[18px] leading-[100%] tracking-[0%]">
+                                    <div
+                                        style={{
+                                            width: 86, height: 86,
+                                            borderRadius: '50%',
+                                            background: GRADIENT,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            marginBottom: 20,
+                                            flexShrink: 0,
+                                        }}
+                                    >
+                                        <span className="text-[30px] text-white">{step.num}</span>
+                                    </div>
+                                    <h3 className="font-medium text-[20px] leading-[100%] tracking-[0%]">
                                         {step.title}
                                     </h3>
-                                    <p className="font-normal text-[14px] leading-[130%] tracking-[0%] text-[#141111] mt-[10px]">
+                                    <p className="font-normal text-[16px] leading-[130%] tracking-[0%] text-[#141111] mt-[15px]">
                                         {step.desc}
                                     </p>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* ── MOBILE layout (< md) ── */}
+                    <div className="relative md:hidden">
+                        <div className="hww-vline-track">
+                            <div className={`hww-vline-fill ${animated ? 'run' : ''}`} />
+                        </div>
+
+                        <div className="relative z-10 flex flex-col">
+                            {STEPS.map((step, i) => (
+                                <div key={i} className="flex items-start gap-5" style={{ marginBottom: i === STEPS.length - 1 ? 0 : 40 }}>
+                                    <div
+                                        style={{
+                                            width: 86, height: 86,
+                                            borderRadius: '50%',
+                                            background: GRADIENT,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            flexShrink: 0,
+                                        }}
+                                    >
+                                        <span className="text-[26px] text-white">{step.num}</span>
+                                    </div>
+
+                                    <div className="flex flex-col justify-center pt-5 flex-1">
+                                        <h3 className="font-medium text-[18px] leading-[100%] tracking-[0%]">
+                                            {step.title}
+                                        </h3>
+                                        <p className="font-normal text-[14px] leading-[130%] tracking-[0%] text-[#141111] mt-[10px]">
+                                            {step.desc}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </section>

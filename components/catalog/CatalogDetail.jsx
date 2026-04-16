@@ -5,7 +5,10 @@ import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import HomeLink from '../homeLink';
 import useApiStore from '@/store/useApiStore';
-
+import { useRouter } from 'next/navigation'
+import { FiHeart, FiBarChart2 } from 'react-icons/fi'
+import { FaHeart } from 'react-icons/fa'
+import { useFavoriteCompare } from '@/store/useFavoriteCompare'
 const ORANGE = 'linear-gradient(90deg, #F05D22 0%, #DF3505 35.22%, #F13F03 68.86%, #F94A0B 100%)';
 
 function formatPrice(p) {
@@ -136,7 +139,15 @@ function DescriptionBlock({ description, extraFields }) {
    ═══════════════════════════════════════ */
 function NewBuildingDetail({ p }) {
     const rd = p.residential_details;
+    const router = useRouter()
+    const { isFavorite, toggleFavorite, isCompare, toggleCompare } = useFavoriteCompare()
+    const favActive = isFavorite(p.id)
+    const cmpActive = isCompare(p.id)
 
+    function handleZayavka() {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
+        router.push(token ? '/profile' : '/sign-in')
+    }
     // Asosiy 5 ta (kartochkada ko'rsatiladi)
     const mainFields = [
         ['Застройщик', rd?.developer],
@@ -168,8 +179,35 @@ function NewBuildingDetail({ p }) {
                     <h1 style={{ fontSize: 22, fontWeight: 500, color: '#111827', margin: '0 0 4px' }}>{p.name}</h1>
                     <p style={{ fontSize: 13, color: '#9CA3AF', margin: '0 0 16px' }}>{p.code}</p>
 
-                    <div style={{ fontSize: 26, fontWeight: 600, color: '#111827', marginBottom: 16 }}>
-                        от {formatPrice(p.price)} ₽
+                    <div className="flex items-center justify-between mb-4">
+                        <div style={{ fontSize: 20, fontWeight: 700, color: '#141111', marginBottom: 16 }}>
+                            {formatPrice(p.price)} ₽
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                            <button
+                                onClick={() => toggleFavorite(p.id)}
+                                style={{
+                                    width: 36, height: 36, borderRadius: '50%', border: '1px solid #E5E7EB',
+                                    background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    cursor: 'pointer', flexShrink: 0,
+                                }}
+                            >
+                                {favActive
+                                    ? <FaHeart size={15} color="#F05D22" />
+                                    : <FiHeart size={15} color="#9CA3AF" />
+                                }
+                            </button>
+                            <button
+                                onClick={() => toggleCompare(p.id)}
+                                style={{
+                                    width: 36, height: 36, borderRadius: '50%', border: '1px solid #E5E7EB',
+                                    background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    cursor: 'pointer', flexShrink: 0,
+                                }}
+                            >
+                                <FiBarChart2 size={15} color={cmpActive ? '#F05D22' : '#9CA3AF'} />
+                            </button>
+                        </div>
                     </div>
 
                     <div style={{ background: '#F9FAFB', borderRadius: 12, padding: '16px', marginBottom: 16 }}>
@@ -178,11 +216,14 @@ function NewBuildingDetail({ p }) {
                         )}
                     </div>
 
-                    <button style={{
-                        background: ORANGE, color: '#fff', border: 'none',
-                        borderRadius: 999, padding: '14px 32px', fontSize: 15,
-                        fontWeight: 500, cursor: 'pointer', width: '100%',
-                    }}>
+                    <button
+                        onClick={handleZayavka}
+                        style={{
+                            background: ORANGE, color: '#fff', border: 'none',
+                            borderRadius: 999, padding: '14px 32px', fontSize: 15,
+                            fontWeight: 500, cursor: 'pointer', width: '100%',
+                        }}
+                    >
                         Оставить заявку
                     </button>
                 </div>
@@ -217,6 +258,15 @@ function NewBuildingDetail({ p }) {
    LAND PLOT detail
    ═══════════════════════════════════════ */
 function LandPlotDetail({ p }) {
+    const router = useRouter()
+    const { isFavorite, toggleFavorite, isCompare, toggleCompare } = useFavoriteCompare()
+    const favActive = isFavorite(p.id)
+    const cmpActive = isCompare(p.id)
+
+    function handleZayavka() {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
+        router.push(token ? '/profile' : '/sign-in')
+    }
     const mainFields = [
         ['Площадь участка', p.land_area ? `${p.land_area} сот.` : null],
         ['Район', p.district?.name],
@@ -247,8 +297,35 @@ function LandPlotDetail({ p }) {
                             от {formatPrice(p.price)} ₽
                         </span>
                     </div>
-                    <div style={{ fontSize: 26, fontWeight: 600, color: '#111827', marginBottom: 16 }}>
-                        до {formatPrice(p.price)} ₽
+                    <div className="flex items-center justify-between mb-4">
+                        <div style={{ fontSize: 20, fontWeight: 700, color: '#141111', marginBottom: 16 }}>
+                            {formatPrice(p.price)} ₽
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                            <button
+                                onClick={() => toggleFavorite(p.id)}
+                                style={{
+                                    width: 36, height: 36, borderRadius: '50%', border: '1px solid #E5E7EB',
+                                    background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    cursor: 'pointer', flexShrink: 0,
+                                }}
+                            >
+                                {favActive
+                                    ? <FaHeart size={15} color="#F05D22" />
+                                    : <FiHeart size={15} color="#9CA3AF" />
+                                }
+                            </button>
+                            <button
+                                onClick={() => toggleCompare(p.id)}
+                                style={{
+                                    width: 36, height: 36, borderRadius: '50%', border: '1px solid #E5E7EB',
+                                    background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    cursor: 'pointer', flexShrink: 0,
+                                }}
+                            >
+                                <FiBarChart2 size={15} color={cmpActive ? '#F05D22' : '#9CA3AF'} />
+                            </button>
+                        </div>
                     </div>
 
                     <div style={{ background: '#F9FAFB', borderRadius: 12, padding: '16px', marginBottom: 16 }}>
@@ -268,11 +345,14 @@ function LandPlotDetail({ p }) {
                         </div>
                     )}
 
-                    <button style={{
-                        background: ORANGE, color: '#fff', border: 'none',
-                        borderRadius: 999, padding: '14px 32px', fontSize: 15,
-                        fontWeight: 500, cursor: 'pointer', width: '100%',
-                    }}>
+                    <button
+                        onClick={handleZayavka}
+                        style={{
+                            background: ORANGE, color: '#fff', border: 'none',
+                            borderRadius: 999, padding: '14px 32px', fontSize: 15,
+                            fontWeight: 500, cursor: 'pointer', width: '100%',
+                        }}
+                    >
                         Оставить заявку
                     </button>
                 </div>
@@ -313,6 +393,15 @@ function LandPlotDetail({ p }) {
    ═══════════════════════════════════════ */
 function OtherDetail({ p }) {
     const rd = p.residential_details;
+    const router = useRouter()
+    const { isFavorite, toggleFavorite, isCompare, toggleCompare } = useFavoriteCompare()
+    const favActive = isFavorite(p.id)
+    const cmpActive = isCompare(p.id)
+
+    function handleZayavka() {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
+        router.push(token ? '/profile' : '/sign-in')
+    }
 
     const mainFields = [
         ['Площадь', p.area ? `${p.area} м²` : null],
@@ -346,12 +435,46 @@ function OtherDetail({ p }) {
                 </div>
 
                 <div style={{ flex: '0 1 340px', minWidth: 280 }}>
+                    {/* Nom */}
                     <h1 style={{ fontSize: 22, fontWeight: 500, color: '#111827', margin: '0 0 4px' }}>{p.name}</h1>
-                    <p style={{ fontSize: 13, color: '#9CA3AF', margin: '0 0 16px' }}>{p.code}</p>
+                    <p style={{ fontSize: 13, color: '#9CA3AF', margin: '0 0 8px' }}>
+                        {p.district?.name && `${p.district.name}, `}
+                        {p.distance_to_mkad_km && `${p.distance_to_mkad_km} км от МКАД`}
+                    </p>
 
-                    <div style={{ fontSize: 26, fontWeight: 600, color: '#111827', marginBottom: 16 }}>
-                        {formatPrice(p.price)} ₽
+                    {/* ── Favorites + Compare tugmalari ── */}
+                    <div className="flex items-center justify-between mb-4">
+                        <div style={{ fontSize: 20, fontWeight: 700, color: '#141111', marginBottom: 16 }}>
+                            {formatPrice(p.price)} ₽
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                            <button
+                                onClick={() => toggleFavorite(p.id)}
+                                style={{
+                                    width: 36, height: 36, borderRadius: '50%', border: '1px solid #E5E7EB',
+                                    background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    cursor: 'pointer', flexShrink: 0,
+                                }}
+                            >
+                                {favActive
+                                    ? <FaHeart size={15} color="#F05D22" />
+                                    : <FiHeart size={15} color="#9CA3AF" />
+                                }
+                            </button>
+                            <button
+                                onClick={() => toggleCompare(p.id)}
+                                style={{
+                                    width: 36, height: 36, borderRadius: '50%', border: '1px solid #E5E7EB',
+                                    background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    cursor: 'pointer', flexShrink: 0,
+                                }}
+                            >
+                                <FiBarChart2 size={15} color={cmpActive ? '#F05D22' : '#9CA3AF'} />
+                            </button>
+                        </div>
                     </div>
+
+
 
                     <div style={{ background: '#F9FAFB', borderRadius: 12, padding: '16px', marginBottom: 16 }}>
                         {mainFields.map(([label, value]) =>
@@ -359,11 +482,14 @@ function OtherDetail({ p }) {
                         )}
                     </div>
 
-                    <button style={{
-                        background: ORANGE, color: '#fff', border: 'none',
-                        borderRadius: 999, padding: '14px 32px', fontSize: 15,
-                        fontWeight: 500, cursor: 'pointer', width: '100%',
-                    }}>
+                    <button
+                        onClick={handleZayavka}
+                        style={{
+                            background: ORANGE, color: '#fff', border: 'none',
+                            borderRadius: 999, padding: '14px 32px', fontSize: 15,
+                            fontWeight: 500, cursor: 'pointer', width: '100%',
+                        }}
+                    >
                         Оставить заявку
                     </button>
                 </div>
@@ -424,7 +550,6 @@ export default function CatalogDetail() {
     const { getData } = useApiStore();
     const [property, setProperty] = useState(null);
     const [loading, setLoading] = useState(true);
-
     useEffect(() => {
         if (!id) return;
         getData(`accounts/catalog/properties/${id}/`)

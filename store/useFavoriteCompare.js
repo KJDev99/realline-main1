@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 
@@ -22,6 +22,13 @@ export function useFavoriteCompare() {
     const [favorites, setFavorites] = useState([])
     const [compares, setCompares] = useState([])
 
+    // ✅ Ref orqali latest state — stale closure muammosini hal qiladi
+    const favoritesRef = useRef(favorites)
+    const comparesRef = useRef(compares)
+
+    useEffect(() => { favoritesRef.current = favorites }, [favorites])
+    useEffect(() => { comparesRef.current = compares }, [compares])
+
     const isAuth = () => !!getToken()
 
     useEffect(() => {
@@ -31,7 +38,6 @@ export function useFavoriteCompare() {
         }
     }, [])
 
-    // ── Fetch from server on mount ─────────────────────────────────────────────
     useEffect(() => {
         if (!isAuth()) return
         Promise.all([
@@ -45,23 +51,23 @@ export function useFavoriteCompare() {
         }).catch(() => { })
     }, [])
 
-    const isFavorite = useCallback((id) => favorites.includes(id), [favorites])
-    const isCompare = useCallback((id) => compares.includes(id), [compares])
+    const isFavorite = useCallback((id) => favoritesRef.current.includes(id), [])
+    const isCompare = useCallback((id) => comparesRef.current.includes(id), [])
 
-    // ── Toggle Favorite ────────────────────────────────────────────────────────
+    // ✅ toggleFavorite — dependency array tozalandi, ref orqali ishlaydi
     const toggleFavorite = useCallback(async (id, onRemoved) => {
         if (!isAuth()) {
-            setFavorites(prev => {
-                const alreadyIn = prev.includes(id)
-                const next = alreadyIn ? prev.filter(x => x !== id) : [...prev, id]
-                setLocalList('local_favorites', next)
-                toast.success(alreadyIn ? 'Удалено из избранного' : 'Добавлено в избранное')
-                if (alreadyIn && onRemoved) onRemoved(id)
-                return next
-            })
+            const current = favoritesRef.current
+            const alreadyIn = current.includes(id)
+            const next = alreadyIn ? current.filter(x => x !== id) : [...current, id]
+            setLocalList('local_favorites', next)
+            setFavorites(next)
+            toast.success(alreadyIn ? 'Удалено из избранного' : 'Добавлено в избранное')
+            if (alreadyIn && onRemoved) onRemoved(id)
             return
         }
-        if (isFavorite(id)) {
+        const alreadyIn = favoritesRef.current.includes(id)
+        if (alreadyIn) {
             try {
                 await axios.delete(`${API_BASE}accounts/profile/favorites/${id}/`, { headers: getAuthHeaders() })
                 setFavorites(prev => prev.filter(x => x !== id))
@@ -79,22 +85,22 @@ export function useFavoriteCompare() {
                 toast.error('Не удалось добавить в избранное')
             }
         }
-    }, [favorites, isFavorite])
+    }, [])
 
-    // ── Toggle Compare ─────────────────────────────────────────────────────────
+    // ✅ toggleCompare — xuddi shunday
     const toggleCompare = useCallback(async (id, onRemoved) => {
         if (!isAuth()) {
-            setCompares(prev => {
-                const alreadyIn = prev.includes(id)
-                const next = alreadyIn ? prev.filter(x => x !== id) : [...prev, id]
-                setLocalList('local_compares', next)
-                toast.success(alreadyIn ? 'Удалено из сравнения' : 'Добавлено в сравнение')
-                if (alreadyIn && onRemoved) onRemoved(id)
-                return next
-            })
+            const current = comparesRef.current
+            const alreadyIn = current.includes(id)
+            const next = alreadyIn ? current.filter(x => x !== id) : [...current, id]
+            setLocalList('local_compares', next)
+            setCompares(next)
+            toast.success(alreadyIn ? 'Удалено из сравнения' : 'Добавлено в сравнение')
+            if (alreadyIn && onRemoved) onRemoved(id)
             return
         }
-        if (isCompare(id)) {
+        const alreadyIn = comparesRef.current.includes(id)
+        if (alreadyIn) {
             try {
                 await axios.delete(`${API_BASE}accounts/profile/compare/${id}/`, { headers: getAuthHeaders() })
                 setCompares(prev => prev.filter(x => x !== id))
@@ -112,7 +118,7 @@ export function useFavoriteCompare() {
                 toast.error('Не удалось добавить в сравнение')
             }
         }
-    }, [compares, isCompare])
+    }, [])
 
     return { isFavorite, toggleFavorite, isCompare, toggleCompare }
 }

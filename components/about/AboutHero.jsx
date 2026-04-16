@@ -19,16 +19,16 @@ export default function AboutHero() {
                 md:px-[52px] md:py-[48px]
                 relative z-10
             ">
-                <h2 className="text-[22px] md:text-[30px] text-white mb-5 md:mb-7">
+                <h2 className="text-[22px] md:text-[30px] text-white mb-5">
                     Реаллайн — эксперты по недвижимости
                 </h2>
-                <p className="text-[14px] md:text-[16px] text-[#FFFFFF] mb-5 md:mb-7">
+                <p className="text-[14px] md:text-[16px] text-[#FFFFFF] mb-5">
                     Подбираем, проверяем и сопровождаем сделки с недвижимостью — от земельных участков до инвестиционных объектов.
                 </p>
-                <p className="text-[14px] md:text-[16px] text-[#FFFFFF] mb-5 md:mb-7">
+                <p className="text-[14px] md:text-[16px] text-[#FFFFFF] mb-5">
                     Реаллайн — команда специалистов, которая помогает клиентам безопасно и выгодно покупать недвижимость.
                 </p>
-                <p className="text-[14px] md:text-[16px] text-[#FFFFFF] mb-5 md:mb-7">
+                <p className="text-[14px] md:text-[16px] text-[#FFFFFF] mb-5">
                     Мы не показываем всё подряд, а подбираем объекты под цели клиента: для жизни, строительства или инвестиций.
                 </p>
             </div>
@@ -36,7 +36,7 @@ export default function AboutHero() {
             {/* RIGHT */}
             <div className="
                 relative
-                lg:w-[762px]
+                lg:w-[45%]
                 h-[355px] sm:h-[300px] md:h-[400px] lg:h-auto
                 shrink-0
                 m-[4px]
@@ -44,7 +44,7 @@ export default function AboutHero() {
                 overflow-hidden
             ">
                 <Image
-                    src="/sec6.png"
+                    src="/companyo.png"
                     alt="house"
                     fill
                     className="object-cover"

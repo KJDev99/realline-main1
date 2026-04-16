@@ -47,7 +47,7 @@ function ServiceCard({ service, delay, router }) {
             <div style={{
                 position: 'absolute', inset: 0, zIndex: 0,
                 transition: 'filter 0.4s ease',
-                filter: hovered ? 'blur(6px) brightness(0.6)' : 'brightness(0.75)',
+                filter: hovered ? 'blur(6px) brightness(0.6)' : 'brightness(0.95)',
             }}>
                 <Image src={service.image || '/imgs/herobig.png'} alt={service.title} fill className="object-cover" />
             </div>

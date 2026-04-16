@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { FiArrowLeft, FiArrowRight } from 'react-icons/fi';
 import { getData } from '@/lib/apiService';
+import Link from 'next/link';
 
 export default function Reviews() {
     const sectionRef = useRef(null);
@@ -78,7 +79,7 @@ export default function Reviews() {
                 ${Array.from({ length: cardCount }).map((_, i) => `.review-card:nth-child(${i + 1}).visible { transition-delay: ${i * 0.07}s; }`).join('\n')}
 
                 .review-card-inner {
-                    background: rgba(255,255,255,0.08);
+                    background: rgba(255,255,255,0.03);
                     backdrop-filter: blur(6px);
                     -webkit-backdrop-filter: blur(1px);
                     border-radius: 16px;
@@ -194,7 +195,9 @@ export default function Reviews() {
 
                     {/* Header */}
                     <h2 className="reviews-title">Отзывы наших клиентов</h2>
-                    <button className="reviews-all-btn">Смотреть все</button>
+                    <Link href="/reviews" className="reviews-all-btn flex items-center justify-center">
+                        Смотреть все
+                    </Link>
 
                     {/* Cards */}
                     <div ref={scrollRef} className="reviews-scroll-row" style={{ position: 'relative', zIndex: 5 }}>
