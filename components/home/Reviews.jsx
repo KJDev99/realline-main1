@@ -190,7 +190,22 @@ export default function Reviews() {
                 <div className="reviews-outer">
                     {/* BG image */}
                     <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-                        <Image src="/sec4.png" alt="bg" fill className="object-cover" priority />
+                        <Image
+                            src="/sec4.png"
+                            alt="bg"
+                            fill
+                            className="object-cover"
+                            priority
+                        />
+
+                        {/* overlay */}
+                        <div
+                            style={{
+                                position: 'absolute',
+                                inset: 0,
+                                backgroundColor: '#1411111A',
+                            }}
+                        />
                     </div>
 
                     {/* Header */}

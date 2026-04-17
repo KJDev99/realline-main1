@@ -28,9 +28,9 @@ export default function AboutInfo() {
                     <div className="p-5 lg:p-6 bg-[#FAFAFA] rounded-[20px]">
                         <h3 className='text-[#141111] text-[18px] lg:text-[20px] font-medium'>Перед тем как предложить объект, мы:</h3>
                         {[
-                            'Проводим тщательную проверку всех предложений',
-                            'Анализируем локацию',
-                            'Оцениваем перспективу роста стоимости',
+                            'проверяем юридическую чистоту',
+                            'анализируем локацию',
+                            'оцениваем перспективу роста стоимости',
                         ].map((text, i) => (
                             <div key={i} className="flex gap-x-2.5 items-center mt-[15px]">
                                 <div className="size-2.5 shrink-0 bg-[#F05D22] rounded-full" />

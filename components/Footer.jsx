@@ -29,14 +29,16 @@ export default function Footer() {
                         { label: 'Загородная недвижимость', href: '/catalog?category=2&offset=0' },
                         { label: 'Земельные участки', href: '/catalog?category=3&offset=0' },
                         { label: 'Вторичная недвижимость', href: '/catalog?category=4&offset=0' },
-                        { label: 'Коммерческая недвижимость', href: '/catalog?category=5&offset=0' },
+                        { label: 'Смотреть всю недвижимость', href: '/catalog', muted: 'true' },
                     ].map((link) => (
                         <Link
                             key={link.href}
                             href={link.href}
                             className='font-normal text-[16px] leading-[100%] tracking-[0%] align-middle text-white max-md:text-sm'
-                            onMouseOver={e => e.currentTarget.style.color = '#fff'}
-                            onMouseOut={e => e.currentTarget.style.color = link.muted ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.85)'}
+                            style={{
+                                color: link.muted ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255, 1)',
+                            }}
+
                         >
                             {link.label}
                         </Link>

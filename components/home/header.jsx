@@ -141,6 +141,13 @@ export default function Header() {
         }
     };
 
+
+    const handleProfileClick = () => {
+        router.push('/profile');
+
+    };
+
+
     const handleLogout = () => {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
@@ -419,10 +426,10 @@ export default function Header() {
                     </button>
                     {isAuthenticated ? (
                         <button
-                            onClick={() => setShowLogoutDialog(true)}
+                            onClick={handleProfileClick}
                             className="bg-white backdrop-blur-md rounded-full px-5 py-[10px] font-normal text-[14px] transition cursor-pointer"
                         >
-                            Выйти
+                            Профиль
                         </button>
                     ) : (
                         <button
@@ -624,7 +631,7 @@ export default function Header() {
                         <div className="flex gap-2">
                             {isAuthenticated ? (
                                 <button
-                                    onClick={() => { setShowLogoutDialog(true); setMobileMenuOpen(false); }}
+                                    onClick={handleProfileClick()}
                                     className="bg-red-600 text-white font-medium text-[14px] px-5 py-3 rounded-full transition flex-1 cursor-pointer"
                                 >
                                     Выйти
