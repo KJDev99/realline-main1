@@ -123,7 +123,7 @@ export default function PropertyCard({ property, onFavoriteRemoved, onCompareRem
                         Площадь, м²: <span className="text-black font-normal text-[14px] leading-[100%]">{area}</span>
                     </span>
                 )}
-                {tags?.length > 0 && (
+                {/* {tags?.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                         {tags.map(t => (
                             <span key={t.id} className="bg-[#F4F5F5] text-[11px] px-3 py-1 rounded-full">
@@ -131,7 +131,7 @@ export default function PropertyCard({ property, onFavoriteRemoved, onCompareRem
                             </span>
                         ))}
                     </div>
-                )}
+                )} */}
             </div>
         </div>
     )

@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation'
 import { FiHeart, FiBarChart2 } from 'react-icons/fi'
 import { FaHeart } from 'react-icons/fa'
 import { useFavoriteCompare } from '@/store/useFavoriteCompare'
+
 const ORANGE = 'linear-gradient(90deg, #F05D22 0%, #DF3505 35.22%, #F13F03 68.86%, #F94A0B 100%)';
 
 function formatPrice(p) {
@@ -96,9 +97,8 @@ function MapBlock({ lat, lng }) {
     );
 }
 
-/* ─── Описание с "Читать далее" ─── */
+/* ─── Описание — always open ─── */
 function DescriptionBlock({ description, extraFields }) {
-    const [open, setOpen] = useState(false);
     if (!description && (!extraFields || extraFields.length === 0)) return null;
 
     return (
@@ -110,26 +110,186 @@ function DescriptionBlock({ description, extraFields }) {
                 </p>
             )}
             {extraFields?.length > 0 && (
-                <>
-                    {open && (
-                        <div style={{ background: '#F9FAFB', borderRadius: 12, padding: '16px', marginTop: 8 }}>
-                            {extraFields.map(([label, value]) =>
-                                value ? <InfoRow key={label} label={label} value={value} /> : null
-                            )}
-                        </div>
+                <div style={{ background: '#F9FAFB', borderRadius: 12, padding: '16px', marginTop: 8 }}>
+                    {extraFields.map(([label, value]) =>
+                        value ? <InfoRow key={label} label={label} value={value} /> : null
                     )}
-                    <button
-                        onClick={() => setOpen(v => !v)}
-                        style={{
-                            marginTop: 12, background: 'none', border: '1px solid #E5E7EB',
-                            borderRadius: 999, padding: '8px 20px', fontSize: 14,
-                            color: '#F05D22', cursor: 'pointer', fontWeight: 500,
-                        }}
-                    >
-                        {open ? 'Скрыть подробности' : 'Показать все характеристики'}
-                    </button>
-                </>
+                </div>
             )}
+        </div>
+    );
+}
+
+/* ─── Unit Card (3-column grid, no fav/compare) ─── */
+function UnitCard({ unit }) {
+    const [activeSlide, setActiveSlide] = useState(0);
+    const fallback = '/sec2.png';
+
+    const images = unit.image ? [unit.image] : [fallback];
+    const roomLabel = unit.is_studio ? 'Студия' : unit.layout_label || (unit.rooms ? `${unit.rooms}-комн.` : 'Квартира');
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {/* Image */}
+            <div
+                style={{ position: 'relative', borderRadius: 16, overflow: 'hidden', aspectRatio: '1 / 0.75' }}
+                onMouseLeave={() => setActiveSlide(0)}
+            >
+                {images.map((src, i) => (
+                    <Image
+                        key={i}
+                        src={typeof src === 'string' ? src : src.image ?? fallback}
+                        alt={roomLabel}
+                        fill
+                        className="object-cover"
+                        style={{ opacity: i === activeSlide ? 1 : 0, transition: 'opacity 0.3s' }}
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                    />
+                ))}
+
+                {/* Hover zones for multiple images */}
+                {images.length > 1 && (
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', zIndex: 10 }}>
+                        {images.map((_, i) => (
+                            <div
+                                key={i}
+                                style={{ flex: 1, height: '100%' }}
+                                onMouseEnter={() => setActiveSlide(i)}
+                            />
+                        ))}
+                    </div>
+                )}
+
+                {/* Dots */}
+                {images.length > 1 && (
+                    <div style={{
+                        position: 'absolute', bottom: 12, left: 0, right: 0,
+                        display: 'flex', justifyContent: 'center', gap: 6, zIndex: 20, pointerEvents: 'none',
+                    }}>
+                        {images.map((_, i) => (
+                            <span key={i} style={{
+                                display: 'block', borderRadius: 999,
+                                width: i === activeSlide ? 20 : 7, height: 7,
+                                background: i === activeSlide ? '#F05D22' : 'rgba(255,255,255,0.85)',
+                                transition: 'all 0.3s',
+                            }} />
+                        ))}
+                    </div>
+                )}
+
+                {/* Building badge */}
+                {unit.building && (
+                    <div style={{
+                        position: 'absolute', top: 10, left: 10, zIndex: 20,
+                        background: 'rgba(0,0,0,0.55)', borderRadius: 999,
+                        padding: '4px 12px', fontSize: 12, color: '#fff',
+                    }}>
+                        {unit.building}
+                    </div>
+                )}
+            </div>
+
+            {/* Name + Price */}
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, padding: '0 2px' }}>
+                <span style={{ fontWeight: 500, fontSize: 18, lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {roomLabel}
+                </span>
+                <span style={{ fontWeight: 500, fontSize: 16, whiteSpace: 'nowrap', color: '#111827' }}>
+                    от {formatPrice(unit.price)} ₽
+                </span>
+            </div>
+
+            {/* Details */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '0 2px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 16px' }}>
+                    {unit.total_area && (
+                        <span style={{ color: '#9CA3AF', fontSize: 12 }}>
+                            Площадь, м²: <span style={{ color: '#111827', fontWeight: 400, fontSize: 14 }}>{unit.total_area}</span>
+                        </span>
+                    )}
+                    {unit.floor && (
+                        <span style={{ color: '#9CA3AF', fontSize: 12 }}>
+                            Этаж: <span style={{ color: '#111827', fontWeight: 400, fontSize: 14 }}>{unit.floor}{unit.floors_total ? `/${unit.floors_total}` : ''}</span>
+                        </span>
+                    )}
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 16px' }}>
+                    {unit.finishing && (
+                        <span style={{ color: '#9CA3AF', fontSize: 12 }}>
+                            Отделка: <span style={{ color: '#111827', fontWeight: 400, fontSize: 14 }}>{unit.finishing}</span>
+                        </span>
+                    )}
+                    {unit.completion_text && (
+                        <span style={{ color: '#9CA3AF', fontSize: 12 }}>
+                            Сдача: <span style={{ color: '#111827', fontWeight: 400, fontSize: 14 }}>{unit.completion_text}</span>
+                        </span>
+                    )}
+                </div>
+                {unit.price_per_sqm && (
+                    <span style={{ color: '#9CA3AF', fontSize: 12 }}>
+                        Цена за м²: <span style={{ color: '#111827', fontWeight: 400, fontSize: 14 }}>{formatPrice(unit.price_per_sqm)} ₽</span>
+                    </span>
+                )}
+            </div>
+        </div>
+    );
+}
+
+/* ─── Units Section ─── */
+function UnitsSection({ propertyId }) {
+    const { getData } = useApiStore();
+    const [units, setUnits] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (!propertyId) return;
+        getData(`accounts/properties/${propertyId}/units/`)
+            .then(res => {
+                // API paginated yoki array qaytarishi mumkin
+                const results = Array.isArray(res) ? res : (res?.results ?? []);
+                setUnits(results);
+            })
+            .catch(() => setUnits([]))
+            .finally(() => setLoading(false));
+    }, [propertyId]); // eslint-disable-line
+
+    if (loading) {
+        return (
+            <div style={{ marginTop: 48 }}>
+                <SkeletonBlock w="30%" h={24} mb={24} />
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 24 }}>
+                    {[1, 2, 3].map(i => <SkeletonBlock key={i} w="100%" h={260} mb={0} />)}
+                </div>
+            </div>
+        );
+    }
+
+    if (units.length === 0) return null;
+
+    return (
+        <div style={{ marginTop: 48 }}>
+            <h2 style={{ fontSize: 20, fontWeight: 500, color: '#111827', marginBottom: 24 }}>
+                Планировка и цены
+            </h2>
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: 24,
+            }}
+                className="units-grid"
+            >
+                {units.map(unit => (
+                    <UnitCard key={unit.id} unit={unit} />
+                ))}
+            </div>
+            <style>{`
+                @media (max-width: 900px) {
+                    .units-grid { grid-template-columns: repeat(2, 1fr) !important; }
+                }
+                @media (max-width: 560px) {
+                    .units-grid { grid-template-columns: 1fr !important; }
+                }
+            `}</style>
         </div>
     );
 }
@@ -148,7 +308,7 @@ function NewBuildingDetail({ p }) {
         const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
         router.push(token ? '/profile' : '/sign-in')
     }
-    // Asosiy 5 ta (kartochkada ko'rsatiladi)
+
     const mainFields = [
         ['Застройщик', rd?.developer],
         ['Срок сдачи', rd?.completion_period_text],
@@ -157,7 +317,6 @@ function NewBuildingDetail({ p }) {
         ['Этажей', p.floors],
     ];
 
-    // Qolgan maydonlar — "Показать все" tugmasi ostida
     const extraFields = [
         ['Всего квартир', rd?.units_total],
         ['В продаже', rd?.units_available],
@@ -192,10 +351,7 @@ function NewBuildingDetail({ p }) {
                                     cursor: 'pointer', flexShrink: 0,
                                 }}
                             >
-                                {favActive
-                                    ? <FaHeart size={15} color="#F05D22" />
-                                    : <FiHeart size={15} color="#9CA3AF" />
-                                }
+                                {favActive ? <FaHeart size={15} color="#F05D22" /> : <FiHeart size={15} color="#9CA3AF" />}
                             </button>
                             <button
                                 onClick={() => toggleCompare(p.id)}
@@ -211,7 +367,7 @@ function NewBuildingDetail({ p }) {
                     </div>
 
                     <div style={{ background: '#F9FAFB', borderRadius: 12, padding: '16px', marginBottom: 16 }}>
-                        {mainFields.map(([label, value]) =>
+                        {[...mainFields, ...extraFields].map(([label, value]) =>
                             <InfoRow key={label} label={label} value={value} />
                         )}
                     </div>
@@ -229,8 +385,12 @@ function NewBuildingDetail({ p }) {
                 </div>
             </div>
 
-            <DescriptionBlock description={p.description} extraFields={extraFields} />
+            <DescriptionBlock description={p.description} extraFields={[]} />
 
+            {/* ── Units (Квартиры) ── */}
+            <UnitsSection propertyId={p.id} />
+
+            {/* ── Участок и локация ── */}
             <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap', marginTop: 48 }}>
                 <div style={{ flex: 1, minWidth: 240 }}>
                     <h2 style={{ fontSize: 20, fontWeight: 500, color: '#111827', marginBottom: 12 }}>Участок и локация</h2>
@@ -267,15 +427,13 @@ function LandPlotDetail({ p }) {
         const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
         router.push(token ? '/profile' : '/sign-in')
     }
-    const mainFields = [
+
+    const allFields = [
         ['Площадь участка', p.land_area ? `${p.land_area} сот.` : null],
         ['Район', p.district?.name],
         ['Шоссе', p.highway?.name],
         ['От МКАД', p.distance_to_mkad_km ? `${p.distance_to_mkad_km} км` : null],
         ['Посёлок', p.settlement],
-    ];
-
-    const extraFields = [
         ['Отделка', p.finishing],
     ];
 
@@ -310,10 +468,7 @@ function LandPlotDetail({ p }) {
                                     cursor: 'pointer', flexShrink: 0,
                                 }}
                             >
-                                {favActive
-                                    ? <FaHeart size={15} color="#F05D22" />
-                                    : <FiHeart size={15} color="#9CA3AF" />
-                                }
+                                {favActive ? <FaHeart size={15} color="#F05D22" /> : <FiHeart size={15} color="#9CA3AF" />}
                             </button>
                             <button
                                 onClick={() => toggleCompare(p.id)}
@@ -329,7 +484,7 @@ function LandPlotDetail({ p }) {
                     </div>
 
                     <div style={{ background: '#F9FAFB', borderRadius: 12, padding: '16px', marginBottom: 16 }}>
-                        {mainFields.map(([label, value]) =>
+                        {allFields.map(([label, value]) =>
                             <InfoRow key={label} label={label} value={value} />
                         )}
                     </div>
@@ -358,7 +513,7 @@ function LandPlotDetail({ p }) {
                 </div>
             </div>
 
-            <DescriptionBlock description={p.description} extraFields={extraFields} />
+            <DescriptionBlock description={p.description} extraFields={[]} />
 
             <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap', marginTop: 48 }}>
                 <div style={{ flex: 1, minWidth: 240 }}>
@@ -403,15 +558,12 @@ function OtherDetail({ p }) {
         router.push(token ? '/profile' : '/sign-in')
     }
 
-    const mainFields = [
+    const allFields = [
         ['Площадь', p.area ? `${p.area} м²` : null],
         ['Комнат', p.rooms],
         ['Этажей', p.floors],
         ['Район', p.district?.name],
         ['От МКАД', p.distance_to_mkad_km ? `${p.distance_to_mkad_km} км` : null],
-    ];
-
-    const extraFields = [
         ['Спален', p.bedrooms],
         ['Санузлов', p.bathrooms],
         ['Год постройки', p.year_built],
@@ -435,14 +587,12 @@ function OtherDetail({ p }) {
                 </div>
 
                 <div style={{ flex: '0 1 340px', minWidth: 280 }}>
-                    {/* Nom */}
                     <h1 style={{ fontSize: 22, fontWeight: 500, color: '#111827', margin: '0 0 4px' }}>{p.name}</h1>
                     <p style={{ fontSize: 13, color: '#9CA3AF', margin: '0 0 8px' }}>
                         {p.district?.name && `${p.district.name}, `}
                         {p.distance_to_mkad_km && `${p.distance_to_mkad_km} км от МКАД`}
                     </p>
 
-                    {/* ── Favorites + Compare tugmalari ── */}
                     <div className="flex items-center justify-between mb-4">
                         <div style={{ fontSize: 20, fontWeight: 700, color: '#141111', marginBottom: 16 }}>
                             {formatPrice(p.price)} ₽
@@ -456,10 +606,7 @@ function OtherDetail({ p }) {
                                     cursor: 'pointer', flexShrink: 0,
                                 }}
                             >
-                                {favActive
-                                    ? <FaHeart size={15} color="#F05D22" />
-                                    : <FiHeart size={15} color="#9CA3AF" />
-                                }
+                                {favActive ? <FaHeart size={15} color="#F05D22" /> : <FiHeart size={15} color="#9CA3AF" />}
                             </button>
                             <button
                                 onClick={() => toggleCompare(p.id)}
@@ -474,10 +621,8 @@ function OtherDetail({ p }) {
                         </div>
                     </div>
 
-
-
                     <div style={{ background: '#F9FAFB', borderRadius: 12, padding: '16px', marginBottom: 16 }}>
-                        {mainFields.map(([label, value]) =>
+                        {allFields.map(([label, value]) =>
                             <InfoRow key={label} label={label} value={value} />
                         )}
                     </div>
@@ -495,7 +640,7 @@ function OtherDetail({ p }) {
                 </div>
             </div>
 
-            <DescriptionBlock description={p.description} extraFields={extraFields} />
+            <DescriptionBlock description={p.description} extraFields={[]} />
 
             <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap', marginTop: 48 }}>
                 <div style={{ flex: 1, minWidth: 240 }}>
@@ -550,6 +695,7 @@ export default function CatalogDetail() {
     const { getData } = useApiStore();
     const [property, setProperty] = useState(null);
     const [loading, setLoading] = useState(true);
+
     useEffect(() => {
         if (!id) return;
         getData(`accounts/catalog/properties/${id}/`)

@@ -339,11 +339,11 @@ export default function Header() {
                             <div className="mt-[26px] h-5 w-96 bg-white/10 animate-pulse rounded-lg" />
                         </>
                     )}
-                    <Link href="/sign-in">
+                    <a href="#contact">
                         <button className="mt-[23px] lg:mt-[40px] bg-[#F05D22] transition-all duration-200 text-white font-medium w-[180px] h-[68px] rounded-full text-sm">
                             Подобрать участок
                         </button>
-                    </Link>
+                    </a>
                 </div>
             </div>
 
