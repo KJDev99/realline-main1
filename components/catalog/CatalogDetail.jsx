@@ -778,10 +778,9 @@ function LandPlotDetail({ p }) {
     const { isFavorite, toggleFavorite, isCompare, toggleCompare } = useFavoriteCompare()
     const favActive = isFavorite(p.id)
     const cmpActive = isCompare(p.id)
-    function handleZayavka() {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
-        router.push(token ? '/profile' : '/sign-in')
-    }
+    const [modalOpen, setModalOpen] = useState(false);
+
+    function handleZayavka() { setModalOpen(true); }
     const allFields = [
         ['Площадь участка', p.land_area ? `${p.land_area} сот.` : null],
         ['Район', p.district?.name], ['Шоссе', p.highway?.name],
@@ -790,6 +789,8 @@ function LandPlotDetail({ p }) {
     ];
     return (
         <div className="max-w-[1400px] mx-auto px-5 py-10">
+            <Toaster position="top-right" />
+            <ZayavkaModal open={modalOpen} onClose={() => setModalOpen(false)} propertyName={p.name} />
             <HomeLink link="/catalog" label="Каталог" link2={"/catalog/" + p.id} label2={p.name} />
             <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap', marginTop: 24 }}>
                 <div style={{ flex: '1.2 1 340px', minWidth: 300 }}><Gallery images={p.images} /></div>
@@ -859,10 +860,9 @@ function OtherDetail({ p }) {
     const { isFavorite, toggleFavorite, isCompare, toggleCompare } = useFavoriteCompare()
     const favActive = isFavorite(p.id)
     const cmpActive = isCompare(p.id)
-    function handleZayavka() {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
-        router.push(token ? '/profile' : '/sign-in')
-    }
+    const [modalOpen, setModalOpen] = useState(false);
+
+    function handleZayavka() { setModalOpen(true); }
     const allFields = [
         ['Площадь', p.area ? `${p.area} м²` : null], ['Комнат', p.rooms], ['Этажей', p.floors],
         ['Район', p.district?.name], ['От МКАД', p.distance_to_mkad_km ? `${p.distance_to_mkad_km} км` : null],
@@ -872,6 +872,8 @@ function OtherDetail({ p }) {
     ];
     return (
         <div className="max-w-[1400px] mx-auto px-5 py-10">
+            <Toaster position="top-right" />
+            <ZayavkaModal open={modalOpen} onClose={() => setModalOpen(false)} propertyName={p.name} />
             <HomeLink link="/catalog" label="Каталог" link2={"/catalog/" + p.id} label2={p.name} />
             <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap', marginTop: 24 }}>
                 <div style={{ flex: '1.2 1 340px', minWidth: 300 }}><Gallery images={p.images} /></div>

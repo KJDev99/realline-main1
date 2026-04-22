@@ -253,7 +253,7 @@ function CatalogInner() {
     };
 
     const pushFilters = (newFilters) => {
-        router.push(`${pathname}?${buildURLParams(newFilters).toString()}`);
+        router.replace(`${pathname}?${buildURLParams(newFilters).toString()}`, { scroll: false });
     };
 
     const handleFilterChange = (key, value) => {
@@ -267,7 +267,7 @@ function CatalogInner() {
 
     const clearFilters = () => {
         setFilters(parseParams(new URLSearchParams()));
-        router.push(pathname);
+        router.replace(pathname, { scroll: false });
     };
 
     const hasActiveFilters = () =>

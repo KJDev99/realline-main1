@@ -5,12 +5,168 @@ import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import HomeLink from '../homeLink';
 import toast, { Toaster } from 'react-hot-toast';
-import { getData } from '@/lib/apiService';
+import { getData, postData } from '@/lib/apiService';
+import { FiX } from 'react-icons/fi';
 
 const ORANGE_BG = 'linear-gradient(90deg, #F05D22 0%, #DF3505 35.22%, #F13F03 68.86%, #F94A0B 100%)';
+const ORANGE = 'linear-gradient(90deg, #F05D22 0%, #DF3505 35.22%, #F13F03 68.86%, #F94A0B 100%)';
+const ORANGE_COLOR = '#F05D22';
 
 function SkeletonBlock({ w = '100%', h = 20, mb = 12 }) {
     return <div style={{ width: w, height: h, borderRadius: 6, background: '#E5E7EB', marginBottom: mb, animation: 'pulse 1.4s ease-in-out infinite' }} />;
+}
+function ZayavkaModal({ open, onClose }) {
+    const [name, setName] = useState('');
+    const [phone, setPhone] = useState('');
+    const [agreed, setAgreed] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    if (!open) return null;
+
+    const handleSubmit = async () => {
+        if (!name || !phone) { toast.error('Введите имя и номер телефона'); return; }
+        if (!agreed) { toast.error('Дайте согласие на обработку данных'); return; }
+        setLoading(true);
+        try {
+            await postData('/site/consultation/', {
+                name, phone
+            });
+            toast.success('Заявка принята!');
+            setName(''); setPhone(''); setAgreed(false);
+            onClose();
+        } catch {
+            toast.error('Произошла ошибка. Попробуйте снова');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <>
+            {/* Overlay */}
+            <div
+                onClick={onClose}
+                style={{
+                    position: 'fixed', inset: 0, zIndex: 1000,
+                    background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)',
+                    animation: 'fadeIn 0.2s ease',
+                }}
+            />
+            {/* Modal */}
+            <div style={{
+                position: 'fixed', inset: 0, zIndex: 1001,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: '16px', pointerEvents: 'none',
+            }}>
+                <div style={{
+                    background: '#fff', borderRadius: 20, width: '100%', maxWidth: 460,
+                    padding: '36px 32px 32px', position: 'relative', pointerEvents: 'all',
+                    animation: 'slideUp 0.25s cubic-bezier(0.34,1.56,0.64,1)',
+                    boxShadow: '0 24px 60px rgba(0,0,0,0.18)',
+                }}>
+                    {/* Close */}
+                    <button
+                        onClick={onClose}
+                        style={{
+                            position: 'absolute', top: 16, right: 16,
+                            width: 32, height: 32, borderRadius: '50%',
+                            border: '1px solid #E5E7EB', background: '#F9FAFB',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: 'pointer', color: '#6B7280',
+                        }}
+                    >
+                        <FiX size={15} />
+                    </button>
+
+                    {/* Header */}
+                    <div style={{ marginBottom: 24 }}>
+                        <h3 style={{ fontSize: 20, fontWeight: 600, color: '#111827', margin: '0 0 6px' }}>
+                            Оставить заявку
+                        </h3>
+
+                    </div>
+
+                    {/* Inputs */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+                        <input
+                            type="text"
+                            placeholder="Ваше имя"
+                            value={name}
+                            onChange={e => setName(e.target.value)}
+                            style={{
+                                height: 52, borderRadius: 12, border: '1px solid #E5E7EB',
+                                background: '#F9FAFB', padding: '0 16px', fontSize: 14,
+                                outline: 'none', width: '100%', boxSizing: 'border-box',
+                                color: '#111827', transition: 'border-color 0.15s',
+                            }}
+                            onFocus={e => e.target.style.borderColor = ORANGE_COLOR}
+                            onBlur={e => e.target.style.borderColor = '#E5E7EB'}
+                        />
+                        <input
+                            type="tel"
+                            placeholder="Номер телефона"
+                            value={phone}
+                            onChange={e => setPhone(e.target.value)}
+                            style={{
+                                height: 52, borderRadius: 12, border: '1px solid #E5E7EB',
+                                background: '#F9FAFB', padding: '0 16px', fontSize: 14,
+                                outline: 'none', width: '100%', boxSizing: 'border-box',
+                                color: '#111827', transition: 'border-color 0.15s',
+                            }}
+                            onFocus={e => e.target.style.borderColor = ORANGE_COLOR}
+                            onBlur={e => e.target.style.borderColor = '#E5E7EB'}
+                        />
+                    </div>
+
+                    {/* Checkbox */}
+                    <div
+                        onClick={() => setAgreed(a => !a)}
+                        style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginBottom: 20 }}
+                    >
+                        <div style={{
+                            width: 20, height: 20, minWidth: 20, borderRadius: 6,
+                            border: `2px solid ${agreed ? ORANGE_COLOR : '#D1D5DB'}`,
+                            background: agreed ? ORANGE_COLOR : 'transparent',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            marginTop: 1, transition: 'all 0.15s', flexShrink: 0,
+                        }}>
+                            {agreed && (
+                                <svg width="11" height="8" viewBox="0 0 12 9" fill="none">
+                                    <path d="M1 4L4.5 7.5L11 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                            )}
+                        </div>
+                        <span style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.5, userSelect: 'none' }}>
+                            Я даю согласие на обработку персональных данных в соответствии с{' '}
+                            <a href="/privacy" style={{ color: ORANGE_COLOR, textDecoration: 'underline' }} onClick={e => e.stopPropagation()}>
+                                Политикой
+                            </a>
+                        </span>
+                    </div>
+
+                    {/* Submit */}
+                    <button
+                        onClick={handleSubmit}
+                        disabled={loading}
+                        style={{
+                            width: '100%', height: 52, borderRadius: 999,
+                            background: ORANGE, border: 'none',
+                            color: '#fff', fontSize: 15, fontWeight: 500,
+                            cursor: loading ? 'not-allowed' : 'pointer',
+                            opacity: loading ? 0.7 : 1, transition: 'opacity 0.15s',
+                        }}
+                    >
+                        {loading ? 'Отправка...' : 'Отправить заявку'}
+                    </button>
+                </div>
+            </div>
+
+            <style>{`
+                @keyframes fadeIn  { from { opacity: 0 } to { opacity: 1 } }
+                @keyframes slideUp { from { opacity: 0; transform: translateY(24px) scale(0.97) } to { opacity: 1; transform: translateY(0) scale(1) } }
+            `}</style>
+        </>
+    );
 }
 
 export default function ServicesDetail() {
@@ -18,7 +174,9 @@ export default function ServicesDetail() {
     const router = useRouter();
     const [service, setService] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [modalOpen, setModalOpen] = useState(false);
 
+    function handleZayavka() { setModalOpen(true); }
     useEffect(() => {
         if (!id) return;
         getData(`/site/services/${id}/`)
@@ -31,6 +189,7 @@ export default function ServicesDetail() {
         <>
             <style>{`@keyframes pulse { 0%,100%{opacity:.5} 50%{opacity:1} }`}</style>
             <Toaster position="top-right" />
+            <ZayavkaModal open={modalOpen} onClose={() => setModalOpen(false)} />
             <div className="max-w-[1400px] mx-auto px-0 py-0">
 
                 {loading ? (
@@ -67,7 +226,7 @@ export default function ServicesDetail() {
                                 </p>
 
                                 <button
-                                    onClick={() => toast.success('Заявка принята.')}
+                                    onClick={handleZayavka}
                                     style={{
                                         background: ORANGE_BG, color: '#fff', border: 'none',
                                         borderRadius: 999, padding: '16px 32px',

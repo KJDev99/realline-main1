@@ -79,18 +79,18 @@ export default function Reviews() {
                 ${Array.from({ length: cardCount }).map((_, i) => `.review-card:nth-child(${i + 1}).visible { transition-delay: ${i * 0.07}s; }`).join('\n')}
 
                 .review-card-inner {
-                    background: rgba(255,255,255,0.03);
-                    backdrop-filter: blur(6px);
-                    -webkit-backdrop-filter: blur(1px);
-                    border-radius: 16px;
-                    border: 1px solid rgba(255,255,255,0.12);
-                    padding: 24px 24px 28px;
-                    height: 100%;
-                    box-sizing: border-box;
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: space-between;
-                }
+    background: #14111126;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.12);
+    padding: 24px 24px 28px;
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
 
                 .reviews-title {
                     font-weight: 400;
