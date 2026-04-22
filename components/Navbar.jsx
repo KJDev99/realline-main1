@@ -17,7 +17,7 @@ const staticLinks = [
 
 const CITIES = [
     { label: 'Москва', value: 'moscow' },
-    { label: 'Санкт-Петербург', value: 'spb' },
+    { label: 'Санкт-Петербург', value: 'saint_petersburg' },
 ];
 
 const CITY_STORAGE_KEY = 'selected_city';

@@ -25,14 +25,14 @@ const navLinks = [
 
 const CITIES = [
     { label: 'Москва', value: 'moscow' },
-    { label: 'Санкт-Петербург', value: 'spb' },
+    { label: 'Санкт-Петербург', value: 'saint_petersburg' },
 ];
 
 const CITY_STORAGE_KEY = 'selected_city';
 const SELECTED_CITY_EVENT = 'selected-city-changed';
 const CITY_TO_REGION = {
     moscow: 1,
-    spb: 2,
+    saint_petersburg: 2,
 };
 
 export default function Header() {

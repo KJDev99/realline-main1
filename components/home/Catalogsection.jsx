@@ -13,7 +13,27 @@ const BOOL_TAGS = [
     { key: 'near_railway', label: 'Ж/д станция рядом' },
 ];
 
+const CITIES = [
+    { label: 'Москва', value: 'moscow' },
+    { label: 'Санкт-Петербург', value: 'saint_petersburg' },
+];
+
 const PAGE_LIMIT = 9;
+const CITY_STORAGE_KEY = 'selected_city';
+
+function getStoredCity() {
+    try {
+        const stored = localStorage.getItem(CITY_STORAGE_KEY);
+        if (stored === 'moscow' || stored === 'saint_petersburg') return stored;
+    } catch { }
+    return 'moscow';
+}
+
+function setStoredCity(value) {
+    try {
+        localStorage.setItem(CITY_STORAGE_KEY, value);
+    } catch { }
+}
 
 function parseParams(searchParams) {
     return {
@@ -180,6 +200,55 @@ function SearchableSelect({ label, value, onChange, options, placeholder, classN
     );
 }
 
+// ── Simple (non-searchable) city select — only 2 options, no search needed ──
+function CitySelect({ label, value, onChange, className = '' }) {
+    const [open, setOpen] = useState(false);
+    const ref = useRef(null);
+
+    useEffect(() => {
+        const handler = (e) => {
+            if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    const selected = CITIES.find(c => c.value === value);
+
+    return (
+        <div className={`flex flex-col gap-2 ${className}`} ref={ref}>
+            {label && <p className='text-[13px] md:text-[14px]'>{label}</p>}
+            <div className='relative'>
+                <button
+                    type='button'
+                    onClick={() => setOpen(p => !p)}
+                    className='w-full h-[48px] md:h-[56px] bg-[#F4F5F5] rounded-[10px] px-4 md:px-6 flex items-center justify-between text-[14px] md:text-[16px] outline-none text-left'
+                >
+                    <span className='text-[#141111]'>{selected?.label}</span>
+                    <svg width='12' height='7' viewBox='0 0 12 7' fill='none'
+                        className={`transition-transform flex-shrink-0 ${open ? 'rotate-180' : ''}`}>
+                        <path d='M1 1L6 6L11 1' stroke='#999' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round' />
+                    </svg>
+                </button>
+                {open && (
+                    <div className='absolute z-50 w-full mt-1 bg-white border border-[#E5E5E5] rounded-[10px] shadow-md overflow-hidden'>
+                        {CITIES.map(city => (
+                            <div
+                                key={city.value}
+                                onClick={() => { onChange(city.value); setOpen(false); }}
+                                className={`px-4 py-[10px] text-[14px] cursor-pointer hover:bg-[#F4F5F5]
+                                    ${city.value === value ? 'font-semibold text-[#141111]' : 'text-[#444]'}`}
+                            >
+                                {city.label}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
 function CatalogInner() {
     const router = useRouter();
     const pathname = usePathname();
@@ -187,9 +256,12 @@ function CatalogInner() {
     const { getData } = useApiStore();
     const isOnCatalogPage = pathname === '/catalog';
 
+    const [selectedCity, setSelectedCity] = useState('moscow');
+    const [cityReady, setCityReady] = useState(false);
+
     const [categories, setCategories] = useState([]);
-    const [districts, setDistricts] = useState([]);
-    const [highways, setHighways] = useState([]);
+    const [allDistricts, setAllDistricts] = useState([]);
+    const [allHighways, setAllHighways] = useState([]);
     const [properties, setProperties] = useState([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -206,13 +278,28 @@ function CatalogInner() {
     const [filters, setFilters] = useState(initFilters);
     const offsetRef = useRef(initFilters.offset);
 
+    // Filtered by current city
+    const districts = allDistricts.filter(d => d.region === selectedCity);
+    const highways = allHighways.filter(h => h.region === selectedCity);
+
+    // Read city from localStorage on mount
+    useEffect(() => {
+        const city = getStoredCity();
+        setSelectedCity(city);
+        setCityReady(true);
+    }, []);
+
     useEffect(() => {
         getData('accounts/catalog/categories/').then(data => {
             const sorted = (Array.isArray(data) ? data : data.results ?? []).sort((a, b) => a.sort_order - b.sort_order);
             setCategories(sorted);
         }).catch(() => { });
-        getData('accounts/catalog/districts/').then(setDistricts).catch(() => { });
-        getData('accounts/catalog/highways/').then(setHighways).catch(() => { });
+        getData('accounts/catalog/districts/').then(data => {
+            setAllDistricts(Array.isArray(data) ? data : data.results ?? []);
+        }).catch(() => { });
+        getData('accounts/catalog/highways/').then(data => {
+            setAllHighways(Array.isArray(data) ? data : data.results ?? []);
+        }).catch(() => { });
     }, []); // eslint-disable-line
 
     const fetchProperties = useCallback(async (currentFilters, offset, append = false) => {
@@ -261,6 +348,15 @@ function CatalogInner() {
         setFilters(next); pushFilters(next);
     };
 
+    // When city changes: save to localStorage, clear district & highway filters
+    const handleCityChange = (city) => {
+        setSelectedCity(city);
+        setStoredCity(city);
+        const next = { ...filters, district: '', highway: '' };
+        setFilters(next);
+        pushFilters(next);
+    };
+
     const toggleTag = (key) => handleFilterChange(key, !filters[key]);
     const handlePriceBlur = () => pushFilters(filters);
     const handlePriceKeyDown = (e) => { if (e.key === 'Enter') pushFilters(filters); };
@@ -295,6 +391,9 @@ function CatalogInner() {
     const hasMore = properties.length < total;
     const landPlotSelected = isLandPlot(categories, filters.category);
 
+    // Don't render city-dependent selects until localStorage is read
+    if (!cityReady) return null;
+
     return (
         <>
             <style>{`
@@ -310,6 +409,13 @@ function CatalogInner() {
 
                 {/* ── DESKTOP FILTERS (md+) ── */}
                 <div className="hidden md:flex flex-row flex-wrap gap-4 md:gap-6 mb-4">
+                    {/* City select — always first */}
+                    <CitySelect
+                        label='Выберите город:'
+                        value={selectedCity}
+                        onChange={handleCityChange}
+                        className='w-[240px]'
+                    />
                     <SearchableSelect
                         label='Тип недвижимости:'
                         value={filters.category}
@@ -355,34 +461,43 @@ function CatalogInner() {
                             </select>
                         </div>
                     </div>
-                    <div className="hidden lg:flex flex-col w-auto">
-                        <p className="text-[13px] md:text-[14px] mb-2">Стоимость:</p>
-                        <div className="flex gap-3 mt-auto ">
-                            <input type="number" placeholder="От" value={filters.price_min}
-                                onChange={e => setFilters(f => ({ ...f, price_min: e.target.value }))}
-                                onBlur={handlePriceBlur} onKeyDown={handlePriceKeyDown}
-                                className="w-[100px] h-[48px] md:h-[56px] bg-[#F4F5F5] px-4 rounded-[10px] text-sm outline-none" />
-                            <input type="number" placeholder="До" value={filters.price_max}
-                                onChange={e => setFilters(f => ({ ...f, price_max: e.target.value }))}
-                                onBlur={handlePriceBlur} onKeyDown={handlePriceKeyDown}
-                                className="w-[100px] h-[48px] md:h-[56px] bg-[#F4F5F5] px-4 rounded-[10px] text-sm outline-none" />
+                    <div className="flex items-end gap-5">
+                        <div className="hidden lg:flex flex-col w-auto">
+                            <p className="text-[13px] md:text-[14px] mb-2">Стоимость:</p>
+                            <div className="flex gap-3 mt-auto ">
+                                <input type="number" placeholder="От" value={filters.price_min}
+                                    onChange={e => setFilters(f => ({ ...f, price_min: e.target.value }))}
+                                    onBlur={handlePriceBlur} onKeyDown={handlePriceKeyDown}
+                                    className="w-[100px] h-[48px] md:h-[56px] bg-[#F4F5F5] px-4 rounded-[10px] text-sm outline-none" />
+                                <input type="number" placeholder="До" value={filters.price_max}
+                                    onChange={e => setFilters(f => ({ ...f, price_max: e.target.value }))}
+                                    onBlur={handlePriceBlur} onKeyDown={handlePriceKeyDown}
+                                    className="w-[100px] h-[48px] md:h-[56px] bg-[#F4F5F5] px-4 rounded-[10px] text-sm outline-none" />
+                            </div>
+                        </div>
+                        {/* ── DESKTOP BOOL TAGS ── */}
+                        <div className="hidden lg:flex flex-wrap gap-3 md:gap-4 ">
+                            {BOOL_TAGS.map(({ key, label }) => (
+                                <button key={key} onClick={() => toggleTag(key)}
+                                    className={`px-3 py-2 md:px-4 md:py-3 rounded-full text-[14px] md:text-[16px] transition ${filters[key] ? 'bg-gray-900 text-white' : 'bg-[#F4F5F5]'}`}>
+                                    {label}
+                                </button>
+                            ))}
                         </div>
                     </div>
                 </div>
 
-                {/* ── DESKTOP BOOL TAGS ── */}
-                <div className="hidden lg:flex flex-wrap gap-3 md:gap-4 mb-2 md:mb-4">
-                    {BOOL_TAGS.map(({ key, label }) => (
-                        <button key={key} onClick={() => toggleTag(key)}
-                            className={`px-3 py-2 md:px-4 md:py-3 rounded-full text-[14px] md:text-[16px] transition ${filters[key] ? 'bg-gray-900 text-white' : 'bg-[#F4F5F5]'}`}>
-                            {label}
-                        </button>
-                    ))}
-                </div>
+
 
                 {/* ── MOBILE FILTERS ── */}
                 <div className="flex md:hidden flex-col gap-3 mb-4">
-                    {/* Always visible: 2 selects */}
+                    {/* Always visible: city + 2 selects */}
+                    <CitySelect
+                        label='Выберите город:'
+                        value={selectedCity}
+                        onChange={handleCityChange}
+                        className='w-full'
+                    />
                     <SearchableSelect
                         label='Тип недвижимости:'
                         value={filters.category}

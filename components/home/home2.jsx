@@ -88,7 +88,7 @@ export default function Home2() {
         };
     }, []);
 
-    const isSpb = selectedCity === 'spb';
+    const isSpb = selectedCity === 'saint_petersburg';
 
     return (
         <section ref={sectionRef} className="w-full px-1 py-10">
