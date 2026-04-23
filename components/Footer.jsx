@@ -9,7 +9,9 @@ export default function Footer() {
         <footer className='flex-wrap lg:flex gap-10 lg:gap-0 justify-between bg-black max-md:px-5 max-md:py-5 max-md:rounded-t-[10px] px-10 rounded-t-[20px] py-[50px] mr-1 ml-1'>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Image src="/icons/logo.svg" alt="logo" width={196.00035095214844} height={30} style={{ height: 28, width: 'auto' }} />
+                    <Link href={'/'}>
+                        <Image src="/icons/logo.svg" alt="logo" width={196.00035095214844} height={30} style={{ height: 28, width: 'auto' }} />
+                    </Link>
                 </div>
                 <div className='max-md:mb-4 max-md:hidden flex flex-col gap-1.5 mt-2'>
                     <span className='font-normal text-[14px] leading-[100%] tracking-[0%] align-middle text-[rgba(255,255,255,0.35)] mt-[15px]'>© 2026 Все права защищены</span>

@@ -7,6 +7,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, EffectFade } from 'swiper/modules';
 import { FiChevronDown, FiMenu, FiX, FiMapPin } from 'react-icons/fi';
 import useApiStore from '@/store/useApiStore';
+import { postData } from '@/lib/apiService';
 import { AUTH_CHANGED_EVENT } from '@/store/useFavoriteCompare';
 import { useRouter } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
@@ -35,6 +36,160 @@ const CITY_TO_REGION = {
     saint_petersburg: 2,
 };
 
+const ORANGE = 'linear-gradient(90deg, #F05D22 0%, #DF3505 35.22%, #F13F03 68.86%, #F94A0B 100%)';
+const ORANGE_COLOR = '#F05D22';
+
+function ZayavkaModal({ open, onClose }) {
+    const [name, setName] = useState('');
+    const [phone, setPhone] = useState('');
+    const [agreed, setAgreed] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    if (!open) return null;
+
+    const handleSubmit = async () => {
+        if (!name || !phone) { toast.error('Введите имя и номер телефона'); return; }
+        if (!agreed) { toast.error('Дайте согласие на обработку данных'); return; }
+        setLoading(true);
+        try {
+            await postData('/site/consultation/', { name, phone });
+            toast.success('Заявка принята!');
+            setName(''); setPhone(''); setAgreed(false);
+            onClose();
+        } catch {
+            toast.error('Произошла ошибка. Попробуйте снова');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <>
+            {/* Overlay */}
+            <div
+                onClick={onClose}
+                style={{
+                    position: 'fixed', inset: 0, zIndex: 10000,
+                    background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)',
+                    animation: 'fadeIn 0.2s ease',
+                }}
+            />
+            {/* Modal */}
+            <div style={{
+                position: 'fixed', inset: 0, zIndex: 10001,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: '16px', pointerEvents: 'none',
+            }}>
+                <div style={{
+                    background: '#fff', borderRadius: 20, width: '100%', maxWidth: 460,
+                    padding: '36px 32px 32px', position: 'relative', pointerEvents: 'all',
+                    animation: 'slideUp 0.25s cubic-bezier(0.34,1.56,0.64,1)',
+                    boxShadow: '0 24px 60px rgba(0,0,0,0.18)',
+                }}>
+                    {/* Close */}
+                    <button
+                        onClick={onClose}
+                        style={{
+                            position: 'absolute', top: 16, right: 16,
+                            width: 32, height: 32, borderRadius: '50%',
+                            border: '1px solid #E5E7EB', background: '#F9FAFB',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: 'pointer', color: '#6B7280',
+                        }}
+                    >
+                        <FiX size={15} />
+                    </button>
+
+                    {/* Header */}
+                    <div style={{ marginBottom: 24 }}>
+                        <h3 style={{ fontSize: 20, fontWeight: 600, color: '#111827', margin: '0 0 6px' }}>
+                            Оставить заявку
+                        </h3>
+                    </div>
+
+                    {/* Inputs */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+                        <input
+                            type="text"
+                            placeholder="Ваше имя"
+                            value={name}
+                            onChange={e => setName(e.target.value)}
+                            style={{
+                                height: 52, borderRadius: 12, border: '1px solid #E5E7EB',
+                                background: '#F9FAFB', padding: '0 16px', fontSize: 14,
+                                outline: 'none', width: '100%', boxSizing: 'border-box',
+                                color: '#111827', transition: 'border-color 0.15s',
+                            }}
+                            onFocus={e => e.target.style.borderColor = ORANGE_COLOR}
+                            onBlur={e => e.target.style.borderColor = '#E5E7EB'}
+                        />
+                        <input
+                            type="tel"
+                            placeholder="Номер телефона"
+                            value={phone}
+                            onChange={e => setPhone(e.target.value)}
+                            style={{
+                                height: 52, borderRadius: 12, border: '1px solid #E5E7EB',
+                                background: '#F9FAFB', padding: '0 16px', fontSize: 14,
+                                outline: 'none', width: '100%', boxSizing: 'border-box',
+                                color: '#111827', transition: 'border-color 0.15s',
+                            }}
+                            onFocus={e => e.target.style.borderColor = ORANGE_COLOR}
+                            onBlur={e => e.target.style.borderColor = '#E5E7EB'}
+                        />
+                    </div>
+
+                    {/* Checkbox */}
+                    <div
+                        onClick={() => setAgreed(a => !a)}
+                        style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginBottom: 20 }}
+                    >
+                        <div style={{
+                            width: 20, height: 20, minWidth: 20, borderRadius: 6,
+                            border: `2px solid ${agreed ? ORANGE_COLOR : '#D1D5DB'}`,
+                            background: agreed ? ORANGE_COLOR : 'transparent',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            marginTop: 1, transition: 'all 0.15s', flexShrink: 0,
+                        }}>
+                            {agreed && (
+                                <svg width="11" height="8" viewBox="0 0 12 9" fill="none">
+                                    <path d="M1 4L4.5 7.5L11 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                            )}
+                        </div>
+                        <span style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.5, userSelect: 'none' }}>
+                            Я даю согласие на обработку персональных данных в соответствии с{' '}
+                            <a href="/privacy" style={{ color: ORANGE_COLOR, textDecoration: 'underline' }} onClick={e => e.stopPropagation()}>
+                                Политикой
+                            </a>
+                        </span>
+                    </div>
+
+                    {/* Submit */}
+                    <button
+                        onClick={handleSubmit}
+                        disabled={loading}
+                        style={{
+                            width: '100%', height: 52, borderRadius: 999,
+                            background: ORANGE, border: 'none',
+                            color: '#fff', fontSize: 15, fontWeight: 500,
+                            cursor: loading ? 'not-allowed' : 'pointer',
+                            opacity: loading ? 0.7 : 1, transition: 'opacity 0.15s',
+                        }}
+                    >
+                        {loading ? 'Отправка...' : 'Отправить заявку'}
+                    </button>
+                </div>
+            </div>
+
+            <style>{`
+                @keyframes fadeIn  { from { opacity: 0 } to { opacity: 1 } }
+                @keyframes slideUp { from { opacity: 0; transform: translateY(24px) scale(0.97) } to { opacity: 1; transform: translateY(0) scale(1) } }
+            `}</style>
+        </>
+    );
+}
+
 export default function Header() {
     const router = useRouter();
     const swiperRef = useRef(null);
@@ -49,6 +204,7 @@ export default function Header() {
     const [cityHydrated, setCityHydrated] = useState(false);
     const [showLogoutDialog, setShowLogoutDialog] = useState(false);
     const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false);
+    const [modalOpen, setModalOpen] = useState(false);
 
     const dropdownRef = useRef(null);
     const buttonRef = useRef(null);
@@ -68,7 +224,6 @@ export default function Header() {
             .catch(() => { });
     }, []);
 
-    // localStorage faqat clientda — birinchi SSR render bilan moslashishi uchun keyinroq o‘qiladi
     useEffect(() => {
         const savedCityValue = localStorage.getItem(CITY_STORAGE_KEY);
         const city = CITIES.find((c) => c.value === savedCityValue) || CITIES[0];
@@ -77,9 +232,7 @@ export default function Header() {
     }, []);
 
     useEffect(() => {
-        if (!cityHydrated) {
-            return;
-        }
+        if (!cityHydrated) return;
 
         localStorage.setItem(CITY_STORAGE_KEY, selectedCity.value);
         window.dispatchEvent(
@@ -141,12 +294,15 @@ export default function Header() {
         }
     };
 
-
+    // ✅ TO'G'IRLANDI: () => router.push() shaklida, render paytida chaqirilmaydi
     const handleProfileClick = () => {
         router.push('/profile');
-
     };
 
+    const handleZayavka = () => {
+        setMobileMenuOpen(false);
+        setModalOpen(true);
+    };
 
     const handleLogout = () => {
         localStorage.removeItem('access_token');
@@ -166,6 +322,9 @@ export default function Header() {
             style={{ height: '100vh', minHeight: '600px' }}>
 
             <Toaster position="top-right" />
+
+            {/* Zayavka Modal */}
+            <ZayavkaModal open={modalOpen} onClose={() => setModalOpen(false)} />
 
             {/* Logout Dialog */}
             {showLogoutDialog && (
@@ -339,11 +498,13 @@ export default function Header() {
                             <div className="mt-[26px] h-5 w-96 bg-white/10 animate-pulse rounded-lg" />
                         </>
                     )}
-                    <a href="#contact">
-                        <button className="mt-[23px] lg:mt-[40px] bg-[#F05D22] transition-all duration-200 text-white font-medium w-[180px] h-[68px] rounded-full text-sm">
-                            Подобрать участок
-                        </button>
-                    </a>
+                    {/* ✅ #contact o'rniga modal ochiladi */}
+                    <button
+                        onClick={handleZayavka}
+                        className="mt-[23px] lg:mt-[40px] bg-[#F05D22] transition-all duration-200 text-white font-medium w-[180px] h-[68px] rounded-full text-sm"
+                    >
+                        Подобрать участок
+                    </button>
                 </div>
             </div>
 
@@ -401,7 +562,7 @@ export default function Header() {
                                             textAlign: 'left',
                                             padding: '10px 16px',
                                             fontSize: 14,
-                                            color: selectedCity.value === city.value ? '#141111' : '#141111',
+                                            color: '#141111',
                                             fontWeight: selectedCity.value === city.value ? 600 : 400,
                                             background: 'none',
                                             border: 'none',
@@ -421,10 +582,15 @@ export default function Header() {
                     <button className="bg-white backdrop-blur-md rounded-full p-[10px] font-normal text-[14px] leading-[100%] transition">
                         Tg
                     </button>
-                    <button className="bg-white text-black font-normal text-[14px] px-5 py-[10px] rounded-full hover:bg-white/90 transition">
-                        <a href="#contact">Получить консультацию</a>
+                    {/* ✅ #contact o'rniga modal */}
+                    <button
+                        onClick={handleZayavka}
+                        className="bg-white text-black font-normal text-[14px] px-5 py-[10px] rounded-full hover:bg-white/90 transition"
+                    >
+                        Получить консультацию
                     </button>
                     {isAuthenticated ? (
+                        // ✅ TO'G'IRLANDI: onClick={handleProfileClick} — parenthesis yo'q
                         <button
                             onClick={handleProfileClick}
                             className="bg-white backdrop-blur-md rounded-full px-5 py-[10px] font-normal text-[14px] transition cursor-pointer"
@@ -502,7 +668,7 @@ export default function Header() {
                 )}
             </div>
 
-            {/* ===== MOBILE FULLSCREEN MENU (TO'G'IRILGAN) ===== */}
+            {/* ===== MOBILE FULLSCREEN MENU ===== */}
             {mobileMenuOpen && (
                 <div
                     className="fixed inset-0 z-50 bg-[#1a1a1a] flex flex-col"
@@ -524,7 +690,6 @@ export default function Header() {
 
                     {/* Mobile nav links */}
                     <nav className="flex flex-col px-6 pt-2 gap-1 flex-1 overflow-y-auto" style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                        {/* Real estate with inline subcategories */}
                         <div className="w-full">
                             <button
                                 onClick={() => setMobileDropdownOpen((prev) => !prev)}
@@ -620,8 +785,12 @@ export default function Header() {
                         </div>
 
                         <div className="flex gap-2">
-                            <button className="bg-white text-black font-medium text-[14px] px-5 py-3 rounded-full hover:bg-white/90 transition flex-1 cursor-pointer">
-                                <a href="#contact" onClick={() => setMobileMenuOpen(false)}>Получить консультацию</a>
+                            {/* ✅ Mobile: #contact o'rniga modal */}
+                            <button
+                                onClick={handleZayavka}
+                                className="bg-white text-black font-medium text-[14px] px-5 py-3 rounded-full hover:bg-white/90 transition flex-1 cursor-pointer"
+                            >
+                                Получить консультацию
                             </button>
                             <button className="bg-white/90 text-black font-medium text-[14px] px-5 py-3 rounded-full transition border border-white/20 cursor-pointer">
                                 Tg
@@ -630,11 +799,12 @@ export default function Header() {
 
                         <div className="flex gap-2">
                             {isAuthenticated ? (
+                                // ✅ TO'G'IRLANDI: handleProfileClick — parenthesis yo'q
                                 <button
-                                    onClick={handleProfileClick()}
-                                    className="bg-red-600 text-white font-medium text-[14px] px-5 py-3 rounded-full transition flex-1 cursor-pointer"
+                                    onClick={handleProfileClick}
+                                    className="bg-white/90 text-black font-medium text-[14px] px-5 py-3 rounded-full transition border border-white/20 flex-1 cursor-pointer"
                                 >
-                                    Выйти
+                                    Профиль
                                 </button>
                             ) : (
                                 <button

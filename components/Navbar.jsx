@@ -6,6 +6,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FiChevronDown, FiMenu, FiX, FiMapPin } from 'react-icons/fi';
 import useApiStore from '@/store/useApiStore';
+import { postData } from '@/lib/apiService';
+import toast, { Toaster } from 'react-hot-toast';
 
 const staticLinks = [
     { label: 'Услуги', href: '/services' },
@@ -22,6 +24,162 @@ const CITIES = [
 
 const CITY_STORAGE_KEY = 'selected_city';
 const SELECTED_CITY_EVENT = 'selected-city-changed';
+const ORANGE = 'linear-gradient(90deg, #F05D22 0%, #DF3505 35.22%, #F13F03 68.86%, #F94A0B 100%)';
+const ORANGE_COLOR = '#F05D22';
+
+function ZayavkaModal({ open, onClose }) {
+    const [name, setName] = useState('');
+    const [phone, setPhone] = useState('');
+    const [agreed, setAgreed] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    if (!open) return null;
+
+    const handleSubmit = async () => {
+        if (!name || !phone) { toast.error('Введите имя и номер телефона'); return; }
+        if (!agreed) { toast.error('Дайте согласие на обработку данных'); return; }
+        setLoading(true);
+        try {
+            await postData('/site/consultation/', {
+                name, phone
+            });
+            toast.success('Заявка принята!');
+            setName(''); setPhone(''); setAgreed(false);
+            onClose();
+        } catch {
+            toast.error('Произошла ошибка. Попробуйте снова');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <>
+            {/* Overlay */}
+            <div
+                onClick={onClose}
+                style={{
+                    position: 'fixed', inset: 0, zIndex: 1000,
+                    background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)',
+                    animation: 'fadeIn 0.2s ease',
+                }}
+            />
+            {/* Modal */}
+            <div style={{
+                position: 'fixed', inset: 0, zIndex: 1001,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: '16px', pointerEvents: 'none',
+            }}>
+                <div style={{
+                    background: '#fff', borderRadius: 20, width: '100%', maxWidth: 460,
+                    padding: '36px 32px 32px', position: 'relative', pointerEvents: 'all',
+                    animation: 'slideUp 0.25s cubic-bezier(0.34,1.56,0.64,1)',
+                    boxShadow: '0 24px 60px rgba(0,0,0,0.18)',
+                }}>
+                    {/* Close */}
+                    <button
+                        onClick={onClose}
+                        style={{
+                            position: 'absolute', top: 16, right: 16,
+                            width: 32, height: 32, borderRadius: '50%',
+                            border: '1px solid #E5E7EB', background: '#F9FAFB',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: 'pointer', color: '#6B7280',
+                        }}
+                    >
+                        <FiX size={15} />
+                    </button>
+
+                    {/* Header */}
+                    <div style={{ marginBottom: 24 }}>
+                        <h3 style={{ fontSize: 20, fontWeight: 600, color: '#111827', margin: '0 0 6px' }}>
+                            Оставить заявку
+                        </h3>
+
+                    </div>
+
+                    {/* Inputs */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+                        <input
+                            type="text"
+                            placeholder="Ваше имя"
+                            value={name}
+                            onChange={e => setName(e.target.value)}
+                            style={{
+                                height: 52, borderRadius: 12, border: '1px solid #E5E7EB',
+                                background: '#F9FAFB', padding: '0 16px', fontSize: 14,
+                                outline: 'none', width: '100%', boxSizing: 'border-box',
+                                color: '#111827', transition: 'border-color 0.15s',
+                            }}
+                            onFocus={e => e.target.style.borderColor = ORANGE_COLOR}
+                            onBlur={e => e.target.style.borderColor = '#E5E7EB'}
+                        />
+                        <input
+                            type="tel"
+                            placeholder="Номер телефона"
+                            value={phone}
+                            onChange={e => setPhone(e.target.value)}
+                            style={{
+                                height: 52, borderRadius: 12, border: '1px solid #E5E7EB',
+                                background: '#F9FAFB', padding: '0 16px', fontSize: 14,
+                                outline: 'none', width: '100%', boxSizing: 'border-box',
+                                color: '#111827', transition: 'border-color 0.15s',
+                            }}
+                            onFocus={e => e.target.style.borderColor = ORANGE_COLOR}
+                            onBlur={e => e.target.style.borderColor = '#E5E7EB'}
+                        />
+                    </div>
+
+                    {/* Checkbox */}
+                    <div
+                        onClick={() => setAgreed(a => !a)}
+                        style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginBottom: 20 }}
+                    >
+                        <div style={{
+                            width: 20, height: 20, minWidth: 20, borderRadius: 6,
+                            border: `2px solid ${agreed ? ORANGE_COLOR : '#D1D5DB'}`,
+                            background: agreed ? ORANGE_COLOR : 'transparent',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            marginTop: 1, transition: 'all 0.15s', flexShrink: 0,
+                        }}>
+                            {agreed && (
+                                <svg width="11" height="8" viewBox="0 0 12 9" fill="none">
+                                    <path d="M1 4L4.5 7.5L11 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                            )}
+                        </div>
+                        <span style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.5, userSelect: 'none' }}>
+                            Я даю согласие на обработку персональных данных в соответствии с{' '}
+                            <a href="/privacy" style={{ color: ORANGE_COLOR, textDecoration: 'underline' }} onClick={e => e.stopPropagation()}>
+                                Политикой
+                            </a>
+                        </span>
+                    </div>
+
+                    {/* Submit */}
+                    <button
+                        onClick={handleSubmit}
+                        disabled={loading}
+                        style={{
+                            width: '100%', height: 52, borderRadius: 999,
+                            background: ORANGE, border: 'none',
+                            color: '#fff', fontSize: 15, fontWeight: 500,
+                            cursor: loading ? 'not-allowed' : 'pointer',
+                            opacity: loading ? 0.7 : 1, transition: 'opacity 0.15s',
+                        }}
+                    >
+                        {loading ? 'Отправка...' : 'Отправить заявку'}
+                    </button>
+                </div>
+            </div>
+
+            <style>{`
+                @keyframes fadeIn  { from { opacity: 0 } to { opacity: 1 } }
+                @keyframes slideUp { from { opacity: 0; transform: translateY(24px) scale(0.97) } to { opacity: 1; transform: translateY(0) scale(1) } }
+            `}</style>
+        </>
+    );
+}
 
 export default function Navbar() {
     const router = useRouter();
@@ -39,6 +197,9 @@ export default function Navbar() {
     const buttonRef = useRef(null);
     const cityDropdownRef = useRef(null);
     const cityButtonRef = useRef(null);
+
+    const [modalOpen, setModalOpen] = useState(false);
+    function handleZayavka() { setModalOpen(true); }
 
     useEffect(() => {
         const token = localStorage.getItem('access_token');
@@ -126,7 +287,8 @@ export default function Navbar() {
     return (
         <>
             <div className="overflow-visible relative flex items-center justify-between max-w-[1400px] mx-auto px-4 lg:px-6 py-4 lg:py-6">
-
+                <Toaster position="top-right" />
+                <ZayavkaModal open={modalOpen} onClose={() => setModalOpen(false)} />
                 {/* Logo */}
                 <Link href={'/'}>
                     <Image
@@ -278,8 +440,8 @@ export default function Navbar() {
                     <button className="bg-white border border-[#1411111A] rounded-full p-[10px] font-normal text-[14px] transition">
                         Tg
                     </button>
-                    <button className="bg-white border border-[#1411111A] text-black font-normal text-[14px] px-5 py-[10px] rounded-full hover:bg-gray-50 transition">
-                        <a href="#contact">Получить консультацию</a>
+                    <button onClick={handleZayavka} className="bg-white border border-[#1411111A] text-black font-normal text-[14px] px-5 py-[10px] rounded-full hover:bg-gray-50 transition">
+                        Получить консультацию
                     </button>
                     <button
                         onClick={handleAgentClick}
@@ -428,7 +590,7 @@ export default function Navbar() {
 
                         <div className="flex gap-2">
                             <button className="bg-white text-black font-medium text-[14px] px-5 py-3 rounded-full hover:bg-white/90 transition flex-1 cursor-pointer">
-                                <a href="#contact" onClick={() => setMobileMenuOpen(false)}>Получить консультацию</a>
+                                <a onClick={() => { setMobileMenuOpen(false); handleZayavka() }}>Получить консультацию</a>
                             </button>
                             <button className="bg-white/90 text-black font-medium text-[14px] px-5 py-3 rounded-full transition border border-white/20 cursor-pointer">
                                 Tg
