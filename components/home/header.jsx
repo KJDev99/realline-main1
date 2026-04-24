@@ -235,6 +235,7 @@ export default function Header() {
         if (!cityHydrated) return;
 
         localStorage.setItem(CITY_STORAGE_KEY, selectedCity.value);
+        document.cookie = `selected_city=${selectedCity.value};path=/;max-age=31536000`;
         window.dispatchEvent(
             new CustomEvent(SELECTED_CITY_EVENT, { detail: { value: selectedCity.value } }),
         );

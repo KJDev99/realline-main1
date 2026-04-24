@@ -10,7 +10,29 @@ import HowWeWork from '@/components/home/Howwework'
 import Reviews from '@/components/home/Reviews'
 import HomeLink from '@/components/homeLink'
 import Navbar from '@/components/Navbar'
+import { cookies } from 'next/headers'
 import React from 'react'
+
+const SEO = {
+  moscow: {
+    title: 'Об агенстве недвижимости Реаллайн.',
+    description: 'Реаллайн - эксперты по недвижимости. Мы работаем с земельными участками, жилой и коммерческой недвижимостью Москвы.',
+  },
+  saint_petersburg: {
+    title: 'Об агенстве недвижимости Реаллайн.',
+    description: 'Реаллайн - эксперты по недвижимости. Мы работаем с земельными участками, жилой и коммерческой недвижимостью Санкт-Петербурга.',
+  },
+};
+
+export async function generateMetadata() {
+  const cookieStore = await cookies();
+  const city = cookieStore.get('selected_city')?.value ?? 'moscow';
+  const seo = SEO[city] ?? SEO.moscow;
+  return {
+    title: seo.title,
+    description: seo.description,
+  };
+}
 
 export default function page() {
   return (

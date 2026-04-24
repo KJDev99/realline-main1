@@ -232,9 +232,11 @@ export default function Navbar() {
         );
     }, [selectedCity, cityHydrated]);
 
+    // YANGI
     const handleCitySelect = (city) => {
         setSelectedCity(city);
         setCityDropdownOpen(false);
+        document.cookie = `selected_city=${city.value};path=/;max-age=31536000`;
     };
 
     // Close real-estate dropdown on outside click (desktop)
