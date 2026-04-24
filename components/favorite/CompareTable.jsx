@@ -1,7 +1,7 @@
 'use client'
 import React, { useEffect, useState, useCallback } from 'react'
 import axios from 'axios'
-import { useFavoriteCompareStore, AUTH_CHANGED_EVENT } from '@/store/useFavoriteCompare' // adjust path as needed
+import { useFavoriteCompareStore, AUTH_CHANGED_EVENT } from '@/store/useFavoriteCompare'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || ''
 
@@ -10,6 +10,10 @@ function getToken() {
 }
 function getAuthHeaders() {
     return { Authorization: `Bearer ${getToken()}` }
+}
+function getLocalIds() {
+    try { return JSON.parse(localStorage.getItem('local_compares') || '[]') }
+    catch { return [] }
 }
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -37,15 +41,12 @@ function CellValue({ value, type }) {
     return <span>{value}</span>
 }
 
-// ─── highlight best numeric value ─────────────────────────────────────────────
 function getBestIndexes(values, key) {
     const higherIsBetter = ['area', 'land_area', 'rooms', 'bedrooms', 'bathrooms', 'floors']
     const lowerIsBetter = ['price', 'distance_to_mkad_km', 'residential.price_per_sqm_from']
-
     const nums = values.map((v) => (v != null && !isNaN(Number(v)) ? Number(v) : null))
     const valid = nums.filter((n) => n !== null)
     if (!valid.length) return []
-
     if (higherIsBetter.includes(key)) {
         const max = Math.max(...valid)
         return nums.map((n, i) => (n === max ? i : -1)).filter((i) => i !== -1)
@@ -61,22 +62,30 @@ function getBestIndexes(values, key) {
 
 export default function CompareTable() {
     const [tableData, setTableData] = useState(null)
-    const [loading, setLoading] = useState(false)
-    const [hasToken, setHasToken] = useState(false)
+    const [loading, setLoading] = useState(true)
 
     const load = useCallback(async () => {
-        if (!getToken()) {
-            setHasToken(false)
-            setTableData(null)
-            return
-        }
-        setHasToken(true)
         setLoading(true)
         try {
-            const { data } = await axios.get(`${API_BASE}accounts/profile/compare/table/`, {
-                headers: getAuthHeaders(),
-            })
-            setTableData(data)
+            if (getToken()) {
+                // Accountga kirgan — profile endpoint (token bilan)
+                const { data } = await axios.get(`${API_BASE}accounts/profile/compare/table/`, {
+                    headers: getAuthHeaders(),
+                })
+                setTableData(data)
+            } else {
+                // Guest — localdan IDlar olib query param bilan yuboramiz
+                const ids = getLocalIds()
+                if (!ids.length) {
+                    setTableData(null)
+                    return
+                }
+                const idsParam = ids.join(',')
+                const { data } = await axios.get(
+                    `${API_BASE}accounts/compare/table/?ids=${encodeURIComponent(idsParam)}`
+                )
+                setTableData(data)
+            }
         } catch {
             setTableData(null)
         } finally {
@@ -87,41 +96,24 @@ export default function CompareTable() {
     useEffect(() => {
         load()
 
-        const handler = () => {
-            setTimeout(load, 300) // sync bo'lib bo'lgandan keyin yuklaylik
-        }
-        window.addEventListener(AUTH_CHANGED_EVENT, handler)
+        // Login / logout bo'lganda qayta yuklaymiz
+        const authHandler = () => setTimeout(load, 400)
+        window.addEventListener(AUTH_CHANGED_EVENT, authHandler)
 
-        // compares o'zgarganda (o'chirildi/qo'shildi) table qayta yuklanadi
+        // Store compares o'zgarganda (qo'shildi / o'chirildi) qayta yuklaymiz
         let prevCompares = useFavoriteCompareStore.getState().compares
         const unsub = useFavoriteCompareStore.subscribe((state) => {
             if (state.compares !== prevCompares) {
                 prevCompares = state.compares
-                if (getToken()) load()
+                load()
             }
         })
 
         return () => {
-            window.removeEventListener(AUTH_CHANGED_EVENT, handler)
+            window.removeEventListener(AUTH_CHANGED_EVENT, authHandler)
             unsub()
         }
     }, [load])
-
-    // ── token yo'q ─────────────────────────────────────────────────────────────
-    if (!hasToken) {
-        return (
-            <section className="max-w-350 mx-auto px-5 mb-[100px]">
-                <div className="rounded-2xl border border-[#ebebeb] bg-[#fafafa] flex flex-col items-center justify-center py-16 gap-4">
-                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" className="opacity-30">
-                        <rect x="8" y="20" width="32" height="22" rx="4" stroke="#141111" strokeWidth="2" />
-                        <path d="M16 20V14a8 8 0 0 1 16 0v6" stroke="#141111" strokeWidth="2" strokeLinecap="round" />
-                        <circle cx="24" cy="31" r="3" fill="#141111" />
-                    </svg>
-                    <p className="text-[#888] text-[16px]">Войдите, чтобы увидеть таблицу сравнения</p>
-                </div>
-            </section>
-        )
-    }
 
     // ── loading ────────────────────────────────────────────────────────────────
     if (loading) {
@@ -134,7 +126,7 @@ export default function CompareTable() {
         )
     }
 
-    // ── ma'lumot yo'q ──────────────────────────────────────────────────────────
+    // ── bo'sh yoki xato ────────────────────────────────────────────────────────
     if (!tableData || !tableData.items?.length) {
         return null
     }
@@ -142,7 +134,6 @@ export default function CompareTable() {
     const { items, rows } = tableData
     const colCount = items.length
 
-    // Faqat kamida bitta non-null qiymatli qatorlarni ko'rsatamiz
     const visibleRows = rows.filter((row) =>
         row.values.some((v) => v !== null && v !== undefined && v !== ''),
     )
@@ -153,24 +144,19 @@ export default function CompareTable() {
                 Таблица сравнения
             </h2>
 
-            {/* ── scroll wrapper ── */}
             <div className="overflow-x-auto rounded-2xl border border-[#e5e5e5] shadow-sm">
                 <table className="w-full min-w-[600px] border-collapse">
                     <colgroup>
-                        {/* label column */}
                         <col style={{ width: '220px', minWidth: '160px' }} />
-                        {/* property columns */}
                         {items.map((_, i) => (
                             <col key={i} style={{ minWidth: '160px' }} />
                         ))}
                     </colgroup>
 
-                    {/* ── header: only names ── */}
+                    {/* ── header: faqat nomlar ── */}
                     <thead>
                         <tr>
-                            {/* empty corner */}
                             <th className="bg-[#f7f7f7] border-b border-[#e5e5e5] p-0" />
-
                             {items.map((item) => (
                                 <th
                                     key={item.id}
@@ -187,25 +173,26 @@ export default function CompareTable() {
                     {/* ── rows ── */}
                     <tbody>
                         {visibleRows.map((row, rowIdx) => {
-
+                            const bestIndexes =
+                                row.type === 'number' ? getBestIndexes(row.values, row.key) : []
 
                             return (
                                 <tr
                                     key={row.key}
                                     className={rowIdx % 2 === 0 ? 'bg-white' : 'bg-[#fafafa]'}
                                 >
-                                    {/* label */}
                                     <td className="px-4 py-3 text-[13px] font-medium text-[#666] border-r border-[#e5e5e5] whitespace-nowrap">
                                         {row.label}
                                     </td>
 
-                                    {/* values */}
                                     {row.values.slice(0, colCount).map((val, colIdx) => {
+                                        const isBest = bestIndexes.includes(colIdx)
                                         return (
                                             <td
                                                 key={colIdx}
                                                 className={[
                                                     'px-4 py-3 text-[13px] text-[#141111] border-l border-[#e5e5e5] text-center'
+
                                                 ].join(' ')}
                                             >
                                                 <CellValue value={val} type={row.type} />
