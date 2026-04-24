@@ -1,9 +1,10 @@
 'use client'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
 import PropertyCard from '../home/Propertycard'
+import { AUTH_CHANGED_EVENT } from '@/store/useFavoriteCompare' // adjust path
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || ''
 
@@ -19,70 +20,78 @@ export default function AllCompare() {
     const [loading, setLoading] = useState(true)
     const router = useRouter()
 
-    useEffect(() => {
-        const fetch = async () => {
-            setLoading(true)
-            try {
-                if (getToken()) {
-                    const { data } = await axios.get(`${API_BASE}accounts/profile/compare/`, {
-                        headers: getAuthHeaders(),
-                    })
-                    const list = data?.results ?? data ?? []
-                    setProperties(list.map(c => c.property_listing ?? c))
-                } else {
-                    const ids = JSON.parse(localStorage.getItem('local_compares') || '[]')
-                    if (!ids.length) { setProperties([]); return }
-                    const results = await Promise.allSettled(
-                        ids.map(id => axios.get(`${API_BASE}accounts/catalog/properties/${id}/`))
-                    )
-                    setProperties(results.filter(r => r.status === 'fulfilled').map(r => r.value.data))
+    const loadProperties = useCallback(async () => {
+        setLoading(true)
+        try {
+            if (getToken()) {
+                const { data } = await axios.get(`${API_BASE}accounts/profile/compare/`, {
+                    headers: getAuthHeaders(),
+                })
+                const list = data?.results ?? data ?? []
+                setProperties(list.map((c) => c.property_listing ?? c))
+            } else {
+                const ids = JSON.parse(localStorage.getItem('local_compares') || '[]')
+                if (!ids.length) {
+                    setProperties([])
+                    return
                 }
-            } catch {
-                toast.error('Не удалось загрузить сравнение')
-            } finally {
-                setLoading(false)
+                const results = await Promise.allSettled(
+                    ids.map((id) => axios.get(`${API_BASE}accounts/catalog/properties/${id}/`)),
+                )
+                setProperties(results.filter((r) => r.status === 'fulfilled').map((r) => r.value.data))
             }
+        } catch {
+            toast.error('Не удалось загрузить сравнение')
+        } finally {
+            setLoading(false)
         }
-        fetch()
     }, [])
 
-    // Instantly remove card from list when removed from compare
+    useEffect(() => {
+        loadProperties()
+
+        // Login / logout bo'lganda qayta yuklaymiz (sync tugagandan keyin)
+        const handler = () => setTimeout(loadProperties, 400)
+        window.addEventListener(AUTH_CHANGED_EVENT, handler)
+        return () => window.removeEventListener(AUTH_CHANGED_EVENT, handler)
+    }, [loadProperties])
+
     const handleRemoved = (id) => {
-        setProperties(prev => prev.filter(p => p.id !== id))
+        setProperties((prev) => prev.filter((p) => p.id !== id))
     }
 
-    if (loading) return (
-        <div className="flex items-center justify-center h-[200px]">
-            <div className="w-8 h-8 border-2 border-[#141111] border-t-transparent rounded-full animate-spin" />
-        </div>
-    )
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-[200px]">
+                <div className="w-8 h-8 border-2 border-[#141111] border-t-transparent rounded-full animate-spin" />
+            </div>
+        )
+    }
 
-    if (!properties.length) return (
-        <div className="flex items-center justify-center h-[200px] text-[#aaa] text-[16px]">
-            Нет объектов для сравнения
-        </div>
-    )
+    if (!properties.length) {
+        return (
+            <div className="flex items-center justify-center h-[200px] text-[#aaa] text-[16px]">
+                Нет объектов для сравнения
+            </div>
+        )
+    }
 
     return (
-        <>
-            <div className="max-w-350 mx-auto px-5 mb-[100px] mt-0 ">
-                <h2 className='text-[36px] mb-7 text-[#141111] max-md:text-[26px] max-md:mb-4'>Сравнение объектов</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-
-                    {properties.map(property => (
-                        <div
-                            key={property.id}
-                            onClick={() => router.push(`/catalog/${property.id}`)}
-                            className="cursor-pointer"
-                        >
-                            <PropertyCard
-                                property={property}
-                                onCompareRemoved={handleRemoved}
-                            />
-                        </div>
-                    ))}
-                </div>
+        <div className="max-w-350 mx-auto px-5 mb-[50px] mt-0">
+            <h2 className="text-[36px] mb-7 text-[#141111] max-md:text-[26px] max-md:mb-4">
+                Сравнение объектов
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {properties.map((property) => (
+                    <div
+                        key={property.id}
+                        onClick={() => router.push(`/catalog/${property.id}`)}
+                        className="cursor-pointer"
+                    >
+                        <PropertyCard property={property} onCompareRemoved={handleRemoved} />
+                    </div>
+                ))}
             </div>
-        </>
+        </div>
     )
 }

@@ -10,7 +10,6 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || ''
 const LOCAL_FAV = 'local_favorites'
 const LOCAL_CMP = 'local_compares'
 
-/** Login / logout — favorite store qayta yuklansin */
 export const AUTH_CHANGED_EVENT = 'auth-changed'
 
 function getToken() {
@@ -33,7 +32,6 @@ function setLocalList(key, list) {
     localStorage.setItem(key, JSON.stringify(list))
 }
 
-/** API va JSON parse ba'zan string/number aralash qaytaradi — includes() uchun bir xil qilamiz */
 function normalizeId(id) {
     const n = Number(id)
     return Number.isFinite(n) ? n : id
@@ -46,14 +44,46 @@ function extractPropertyIds(data) {
         .filter((x) => x != null && x !== '')
 }
 
-/** Bir vaqtda faqat bitta hydrate (ko‘p kartochkadan parallel chaqiruv) */
+/** Login bo'lganda local comparelarni backendga jimgina sync qilish */
+async function syncLocalComparesToBackend() {
+    const localIds = getLocalList(LOCAL_CMP).map(normalizeId)
+    if (!localIds.length) return
+
+    // Avval backendda nima borligini bilamiz
+    let existingIds = []
+    try {
+        const { data } = await axios.get(`${API_BASE}accounts/profile/compare/`, {
+            headers: getAuthHeaders(),
+        })
+        existingIds = extractPropertyIds(data)
+    } catch {
+        // ignore
+    }
+
+    const toAdd = localIds.filter((id) => !existingIds.includes(id))
+    const available = 4 - existingIds.length
+
+    // Faqat limit bo'lgan qadarda qo'shamiz, jimgina
+    const batch = toAdd.slice(0, Math.max(0, available))
+    await Promise.allSettled(
+        batch.map((id) =>
+            axios.post(
+                `${API_BASE}accounts/profile/compare/add/`,
+                { property_listing: id },
+                { headers: getAuthHeaders() },
+            ),
+        ),
+    )
+
+    // Local listni tozalab tashlaymiz
+    setLocalList(LOCAL_CMP, [])
+}
+
 let hydrateInFlight = null
 
 let authListenerAttached = false
 function attachAuthListenerOnce() {
-    if (typeof window === 'undefined' || authListenerAttached) {
-        return
-    }
+    if (typeof window === 'undefined' || authListenerAttached) return
     authListenerAttached = true
     window.addEventListener(AUTH_CHANGED_EVENT, () => {
         void useFavoriteCompareStore.getState().invalidateAndHydrate()
@@ -63,20 +93,20 @@ function attachAuthListenerOnce() {
 export const useFavoriteCompareStore = create((set, get) => ({
     favorites: [],
     compares: [],
-    /** token o‘zgarganda qayta yuklash uchun */
     hydrated: false,
     _lastToken: undefined,
 
-    /** Login / logout dan keyin qayta yuklash */
     invalidateAndHydrate: async () => {
+        // Agar login bo'lgan bo'lsa, oldin local comparelarni sync qilamiz
+        if (getToken()) {
+            await syncLocalComparesToBackend()
+        }
         set({ hydrated: false, _lastToken: undefined })
         await get().hydrateOnce()
     },
 
     hydrateOnce: async () => {
-        if (typeof window === 'undefined') {
-            return
-        }
+        if (typeof window === 'undefined') return
 
         if (hydrateInFlight) {
             await hydrateInFlight
@@ -88,9 +118,7 @@ export const useFavoriteCompareStore = create((set, get) => ({
             set({ _lastToken: token, hydrated: false })
         }
 
-        if (get().hydrated) {
-            return
-        }
+        if (get().hydrated) return
 
         hydrateInFlight = (async () => {
             try {
@@ -134,9 +162,7 @@ export const useFavoriteCompareStore = create((set, get) => ({
             setLocalList(LOCAL_FAV, next)
             set({ favorites: next })
             toast.success(alreadyIn ? 'Удалено из избранного' : 'Добавлено в избранное')
-            if (alreadyIn && onRemoved) {
-                onRemoved(id)
-            }
+            if (alreadyIn && onRemoved) onRemoved(id)
             return
         }
 
@@ -146,9 +172,7 @@ export const useFavoriteCompareStore = create((set, get) => ({
                 await axios.delete(`${API_BASE}accounts/profile/favorites/${id}/`, { headers: getAuthHeaders() })
                 set({ favorites: get().favorites.filter((x) => x !== id) })
                 toast.success('Удалено из избранного')
-                if (onRemoved) {
-                    onRemoved(id)
-                }
+                if (onRemoved) onRemoved(id)
             } catch {
                 toast.error('Не удалось удалить из избранного')
             }
@@ -173,13 +197,17 @@ export const useFavoriteCompareStore = create((set, get) => ({
         if (!getToken()) {
             const current = get().compares
             const alreadyIn = current.includes(id)
+
+            if (!alreadyIn && current.length >= 4) {
+                toast.error('В сравнении не более 4 объектов.')
+                return
+            }
+
             const next = alreadyIn ? current.filter((x) => x !== id) : [...current, id]
             setLocalList(LOCAL_CMP, next)
             set({ compares: next })
             toast.success(alreadyIn ? 'Удалено из сравнения' : 'Добавлено в сравнение')
-            if (alreadyIn && onRemoved) {
-                onRemoved(id)
-            }
+            if (alreadyIn && onRemoved) onRemoved(id)
             return
         }
 
@@ -189,9 +217,7 @@ export const useFavoriteCompareStore = create((set, get) => ({
                 await axios.delete(`${API_BASE}accounts/profile/compare/${id}/`, { headers: getAuthHeaders() })
                 set({ compares: get().compares.filter((x) => x !== id) })
                 toast.success('Удалено из сравнения')
-                if (onRemoved) {
-                    onRemoved(id)
-                }
+                if (onRemoved) onRemoved(id)
             } catch {
                 toast.error('Не удалось удалить из сравнения')
             }
@@ -205,7 +231,7 @@ export const useFavoriteCompareStore = create((set, get) => ({
                 set({ compares: [...get().compares, id] })
                 toast.success('Добавлено в сравнение')
             } catch {
-                toast.error('Не удалось добавить в сравнение')
+                toast.error('В сравнении не более 4 объектов.')
             }
         }
     },
