@@ -665,7 +665,7 @@ export default function NewObyam() {
         { value: cat.id, label: cat.main_category },
         ...(cat.sub_category?.map(sub => ({
             value: sub.id,
-            label: `  └ ${sub.sub_category}`,
+            label: `   ${sub.sub_category}`,
         })) || []),
     ])
     const districtOptions = districts.map(d => ({ value: d.id, label: d.name }))
