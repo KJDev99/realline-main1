@@ -396,7 +396,7 @@ export default function Header() {
                                                 background: '#fff',
                                                 borderRadius: 14,
                                                 boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-                                                minWidth: 220,
+                                                minWidth: 240,
                                                 zIndex: 9999,
                                                 padding: '8px 0',
                                                 border: '1px solid #F0F0F0',
@@ -407,8 +407,7 @@ export default function Header() {
                                                 style={{
                                                     display: 'block', width: '100%', textAlign: 'left',
                                                     padding: '10px 20px', fontSize: 14, color: '#111827',
-                                                    background: 'none', border: 'none', cursor: 'pointer',
-                                                    fontWeight: 500,
+                                                    background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500,
                                                 }}
                                                 onMouseEnter={e => e.currentTarget.style.background = '#F9FAFB'}
                                                 onMouseLeave={e => e.currentTarget.style.background = 'none'}
@@ -417,19 +416,61 @@ export default function Header() {
                                             </button>
                                             <div style={{ height: 1, background: '#F0F0F0', margin: '4px 0' }} />
                                             {categories.map((cat) => (
-                                                <button
-                                                    key={cat.id}
-                                                    onClick={() => handleCategoryClick(cat.id)}
-                                                    style={{
-                                                        display: 'block', width: '100%', textAlign: 'left',
-                                                        padding: '10px 20px', fontSize: 14, color: '#374151',
-                                                        background: 'none', border: 'none', cursor: 'pointer',
+                                                <div key={cat.id} style={{ position: 'relative' }}
+                                                    onMouseEnter={e => {
+                                                        if (cat.sub_category?.length > 0)
+                                                            e.currentTarget.querySelector('.sub-menu').style.display = 'block';
                                                     }}
-                                                    onMouseEnter={e => e.currentTarget.style.background = '#F9FAFB'}
-                                                    onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                                                    onMouseLeave={e => {
+                                                        if (cat.sub_category?.length > 0)
+                                                            e.currentTarget.querySelector('.sub-menu').style.display = 'none';
+                                                    }}
                                                 >
-                                                    {cat.name}
-                                                </button>
+                                                    <button
+                                                        onClick={() => handleCategoryClick(cat.id)}
+                                                        style={{
+                                                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                                            width: '100%', textAlign: 'left',
+                                                            padding: '10px 20px', fontSize: 14, color: '#374151',
+                                                            background: 'none', border: 'none', cursor: 'pointer',
+                                                        }}
+                                                        onMouseEnter={e => e.currentTarget.style.background = '#F9FAFB'}
+                                                        onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                                                    >
+                                                        {cat.main_category}
+                                                        {cat.sub_category?.length > 0 && (
+                                                            <svg width="8" height="12" viewBox="0 0 8 12" fill="none" style={{ flexShrink: 0 }}>
+                                                                <path d="M1 1l6 5-6 5" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                                            </svg>
+                                                        )}
+                                                    </button>
+                                                    {cat.sub_category?.length > 0 && (
+                                                        <div className="sub-menu" style={{
+                                                            display: 'none', position: 'absolute',
+                                                            top: 0, left: '100%',
+                                                            background: '#fff', borderRadius: 14,
+                                                            boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                                                            minWidth: 200, zIndex: 9999,
+                                                            padding: '8px 0', border: '1px solid #F0F0F0',
+                                                        }}>
+                                                            {cat.sub_category.map(sub => (
+                                                                <button
+                                                                    key={sub.id}
+                                                                    onClick={() => handleCategoryClick(sub.id)}
+                                                                    style={{
+                                                                        display: 'block', width: '100%', textAlign: 'left',
+                                                                        padding: '10px 20px', fontSize: 14, color: '#374151',
+                                                                        background: 'none', border: 'none', cursor: 'pointer',
+                                                                    }}
+                                                                    onMouseEnter={e => e.currentTarget.style.background = '#F9FAFB'}
+                                                                    onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                                                                >
+                                                                    {sub.sub_category}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             ))}
                                         </div>
                                     )}
@@ -715,13 +756,27 @@ export default function Header() {
                                         Все категории
                                     </button>
                                     {categories.map((cat) => (
-                                        <button
-                                            key={cat.id}
-                                            onClick={() => handleCategoryClick(cat.id)}
-                                            className="text-left text-white/60 text-[15px] py-2 hover:text-white transition w-full cursor-pointer"
-                                        >
-                                            {cat.name}
-                                        </button>
+                                        <div key={cat.id} className="w-full">
+                                            <button
+                                                onClick={() => handleCategoryClick(cat.id)}
+                                                className="text-left text-white/80 text-[15px] py-2 font-medium hover:text-white transition w-full cursor-pointer"
+                                            >
+                                                {cat.main_category}
+                                            </button>
+                                            {cat.sub_category?.length > 0 && (
+                                                <div className="flex flex-col pl-4 gap-1">
+                                                    {cat.sub_category.map(sub => (
+                                                        <button
+                                                            key={sub.id}
+                                                            onClick={() => handleCategoryClick(sub.id)}
+                                                            className="text-left text-white/60 text-[14px] py-1.5 hover:text-white transition w-full cursor-pointer"
+                                                        >
+                                                            {sub.sub_category}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
                                     ))}
                                 </div>
                             )}

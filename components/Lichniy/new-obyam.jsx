@@ -661,7 +661,13 @@ export default function NewObyam() {
     }
 
     // ─── Options ──────────────────────────────────────────────────────────────
-    const categoryOptions = categories.map(c => ({ value: c.id, label: c.name }))
+    const categoryOptions = categories.flatMap(cat => [
+        { value: cat.id, label: cat.main_category },
+        ...(cat.sub_category?.map(sub => ({
+            value: sub.id,
+            label: `  └ ${sub.sub_category}`,
+        })) || []),
+    ])
     const districtOptions = districts.map(d => ({ value: d.id, label: d.name }))
     const highwayOptions = highways.map(h => ({ value: h.id, label: h.name }))
     const regionOptions = regions.map(r => ({ value: r.id, label: r.name }))

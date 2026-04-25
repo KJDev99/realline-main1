@@ -160,8 +160,8 @@ function SearchableSelect({ label, value, onChange, options, placeholder, classN
                     onClick={() => setOpen(p => !p)}
                     className='w-full h-[48px] md:h-[56px] bg-[#F4F5F5] rounded-[10px] px-4 md:px-6 flex items-center justify-between text-[14px] md:text-[16px] outline-none text-left'
                 >
-                    <span className={selected ? 'text-[#141111]' : 'text-[#aaa]'}>
-                        {selected ? selected.label : placeholder}
+                    <span className={selected ? 'text-[#141111] text-nowrap' : 'text-[#aaa]'}>
+                        {selected ? selected.label.length > 20 ? selected.label.slice(0, 20) + '...' : selected.label : placeholder}
                     </span>
                     <svg width='12' height='7' viewBox='0 0 12 7' fill='none'
                         className={`transition-transform flex-shrink-0 ${open ? 'rotate-180' : ''}`}>
@@ -420,7 +420,16 @@ function CatalogInner() {
                         label='Тип недвижимости:'
                         value={filters.category}
                         onChange={v => handleFilterChange('category', v)}
-                        options={[{ value: '', label: 'Все типы' }, ...categories.map(c => ({ value: c.id, label: c.name }))]}
+                        options={[
+                            { value: '', label: 'Все типы' },
+                            ...categories.flatMap(cat => [
+                                { value: cat.id, label: cat.main_category },
+                                ...(cat.sub_category?.map(sub => ({
+                                    value: sub.id,
+                                    label: `   ${sub.sub_category}`,
+                                })) || []),
+                            ]),
+                        ]}
                         placeholder='Все типы'
                         className='w-[240px]'
                     />
@@ -502,7 +511,16 @@ function CatalogInner() {
                         label='Тип недвижимости:'
                         value={filters.category}
                         onChange={v => handleFilterChange('category', v)}
-                        options={[{ value: '', label: 'Все типы' }, ...categories.map(c => ({ value: c.id, label: c.name }))]}
+                        options={[
+                            { value: '', label: 'Все типы' },
+                            ...categories.flatMap(cat => [
+                                { value: cat.id, label: cat.main_category },
+                                ...(cat.sub_category?.map(sub => ({
+                                    value: sub.id,
+                                    label: `  ${sub.sub_category}`,
+                                })) || []),
+                            ]),
+                        ]}
                         placeholder='Все типы'
                         className='w-full'
                     />
