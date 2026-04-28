@@ -38,7 +38,7 @@ function Select({ label, value, onChange, options, placeholder }) {
 
     const selected = options.find(o => o.value === value)
     const filtered = options.filter(o =>
-        o.label.toLowerCase().includes(search.toLowerCase())
+        o?.label?.toLowerCase().includes(search?.toLowerCase())
     )
 
     return (

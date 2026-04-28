@@ -149,7 +149,7 @@ function SearchableSelect({ label, value, onChange, options, placeholder, classN
     }, [open]);
 
     const selected = options.find(o => String(o.value) === String(value));
-    const filtered = options.filter(o => o.label.toLowerCase().includes(search.toLowerCase()));
+    const filtered = options.filter(o => o?.label?.toLowerCase().includes(search?.toLowerCase()));
 
     return (
         <div className={`flex flex-col gap-2 ${className}`} ref={ref}>
