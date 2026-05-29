@@ -70,7 +70,7 @@ export default function AllFavorite() {
                 {properties.map(property => (
                     <div
                         key={property.id}
-                        onClick={() => router.push(`/catalog/${property.id}`)}
+                        onClick={() => router.push(`/catalog/${property.slug}`)}
                         className="cursor-pointer"
                     >
                         <PropertyCard

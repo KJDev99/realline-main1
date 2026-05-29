@@ -163,7 +163,7 @@ export default function ActualOffers() {
     }, []);
 
     const handleCardClick = (property) => {
-        router.push(`/catalog/${property.id}`);
+        router.push(`/catalog/${property.slug}`);
     };
 
     return (

@@ -85,7 +85,7 @@ export default function AllCompare() {
                 {properties.map((property) => (
                     <div
                         key={property.id}
-                        onClick={() => router.push(`/catalog/${property.id}`)}
+                        onClick={() => router.push(`/catalog/${property.slug}`)}
                         className="cursor-pointer"
                     >
                         <PropertyCard property={property} onCompareRemoved={handleRemoved} />

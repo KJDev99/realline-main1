@@ -385,7 +385,7 @@ function CatalogInner() {
     };
 
     const handleCardClick = (property) => {
-        router.push(`/catalog/${property.id}`);
+        router.push(`/catalog/${property.slug}`);
     };
 
     const hasMore = properties.length < total;
