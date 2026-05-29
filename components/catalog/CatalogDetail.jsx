@@ -52,8 +52,31 @@ function Gallery({ images }) {
 
     return (
         <div style={{ width: "100%" }}>
-            <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", borderRadius: 16, overflow: "hidden", marginBottom: 10 }}>
-                <Image src={getImgSrc(imgs[active])} alt="property" fill className="object-cover" priority sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw" />
+            <div style={{
+                position: "relative",
+                width: "100%",
+                aspectRatio: "16 / 9",
+                borderRadius: 16,
+                overflow: "hidden",  // ← bu border-radius ni qo'llaydi
+                marginBottom: 10,
+                display: "flex",
+                alignItems: "center",
+            }}>
+                <Image
+                    quality={90}
+                    src={getImgSrc(imgs[active])}
+                    alt="property"
+                    width={0}
+                    height={0}
+                    sizes="100vw"
+                    style={{
+                        width: "100%",
+                        height: "auto",
+                        borderRadius: 16,
+                        display: "block"
+                    }}
+                    priority
+                />
             </div>
             {imgs.length > 1 && (
                 <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 6, scrollbarWidth: "thin" }}>
