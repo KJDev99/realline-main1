@@ -249,6 +249,111 @@ function CitySelect({ label, value, onChange, className = '' }) {
     );
 }
 
+// ── Category select with hover sub-category fly-out (like Navbar) ──
+function CategorySelect({ label, value, onChange, categories, className = '' }) {
+    const [open, setOpen] = useState(false);
+    const [openSubId, setOpenSubId] = useState(null);
+    const ref = useRef(null);
+
+    useEffect(() => {
+        const handler = (e) => {
+            if (ref.current && !ref.current.contains(e.target)) { setOpen(false); setOpenSubId(null); }
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    // Resolve label of the currently selected category / sub-category
+    let selectedLabel = 'Все типы';
+    if (value) {
+        for (const cat of categories) {
+            if (String(cat.id) === String(value)) { selectedLabel = cat.main_category; break; }
+            const sub = cat.sub_category?.find(s => String(s.id) === String(value));
+            if (sub) { selectedLabel = sub.sub_category; break; }
+        }
+    }
+
+    const select = (v) => { onChange(v); setOpen(false); setOpenSubId(null); };
+
+    return (
+        <div className={`flex flex-col gap-2 ${className}`} ref={ref}>
+            {label && <p className='text-[13px] md:text-[14px]'>{label}</p>}
+            <div className='relative'>
+                <button
+                    type='button'
+                    onClick={() => setOpen(p => !p)}
+                    className='w-full h-[48px] md:h-[56px] bg-[#F4F5F5] rounded-[10px] px-4 md:px-6 flex items-center justify-between text-[14px] md:text-[16px] outline-none text-left'
+                >
+                    <span className='text-[#141111] truncate'>{selectedLabel}</span>
+                    <svg width='12' height='7' viewBox='0 0 12 7' fill='none'
+                        className={`transition-transform flex-shrink-0 ml-2 ${open ? 'rotate-180' : ''}`}>
+                        <path d='M1 1L6 6L11 1' stroke='#999' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round' />
+                    </svg>
+                </button>
+                {open && (
+                    <div className='absolute z-50 w-full mt-1 bg-white border border-[#E5E5E5] rounded-[10px] shadow-md'
+                        style={{ padding: '6px 0' }}>
+                        <div
+                            onClick={() => select('')}
+                            className='px-4 py-[10px] text-[14px] cursor-pointer hover:bg-[#F4F5F5] text-[#444]'
+                        >
+                            Все типы
+                        </div>
+                        {categories.map(cat => {
+                            const hasSub = cat.sub_category?.length > 0;
+                            return (
+                                <div
+                                    key={cat.id}
+                                    style={{ position: 'relative' }}
+                                    onMouseEnter={() => hasSub && setOpenSubId(cat.id)}
+                                    onMouseLeave={() => hasSub && setOpenSubId(null)}
+                                >
+                                    <div
+                                        onClick={() => select(cat.id)}
+                                        className={`flex items-center justify-between px-4 py-[10px] text-[14px] cursor-pointer hover:bg-[#F4F5F5]
+                                            ${String(cat.id) === String(value) ? 'font-semibold text-[#141111]' : 'text-[#444]'}`}
+                                    >
+                                        {cat.main_category}
+                                        {hasSub && (
+                                            <svg
+                                                width='8' height='12' viewBox='0 0 8 12' fill='none'
+                                                style={{ flexShrink: 0 }}
+                                                onClick={(e) => { e.stopPropagation(); setOpenSubId(p => p === cat.id ? null : cat.id); }}
+                                            >
+                                                <path d='M1 1l6 5-6 5' stroke='#9CA3AF' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round' />
+                                            </svg>
+                                        )}
+                                    </div>
+                                    {hasSub && openSubId === cat.id && (
+                                        <div style={{
+                                            position: 'absolute', top: 0, left: '100%',
+                                            background: '#fff', borderRadius: 10,
+                                            boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                                            minWidth: 200, zIndex: 9999,
+                                            padding: '6px 0', border: '1px solid #E5E5E5',
+                                        }}>
+                                            {cat.sub_category.map(sub => (
+                                                <div
+                                                    key={sub.id}
+                                                    onClick={() => select(sub.id)}
+                                                    className={`px-4 py-[10px] text-[14px] cursor-pointer hover:bg-[#F4F5F5]
+                                                        ${String(sub.id) === String(value) ? 'font-semibold text-[#141111]' : 'text-[#444]'}`}
+                                                >
+                                                    {sub.sub_category}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
 function CatalogInner() {
     const router = useRouter();
     const pathname = usePathname();
@@ -345,6 +450,8 @@ function CatalogInner() {
 
     const handleFilterChange = (key, value) => {
         const next = { ...filters, [key]: value };
+        // Загородное шоссе tanlansa — «Район» kriteriyasi olib tashlanadi
+        if (key === 'highway' && value) next.district = '';
         setFilters(next); pushFilters(next);
     };
 
@@ -416,31 +523,23 @@ function CatalogInner() {
                         onChange={handleCityChange}
                         className='w-[240px]'
                     />
-                    <SearchableSelect
+                    <CategorySelect
                         label='Тип недвижимости:'
                         value={filters.category}
                         onChange={v => handleFilterChange('category', v)}
-                        options={[
-                            { value: '', label: 'Все типы' },
-                            ...categories.flatMap(cat => [
-                                { value: cat.id, label: cat.main_category },
-                                ...(cat.sub_category?.map(sub => ({
-                                    value: sub.id,
-                                    label: `   ${sub.sub_category}`,
-                                })) || []),
-                            ]),
-                        ]}
-                        placeholder='Все типы'
+                        categories={categories}
                         className='w-[240px]'
                     />
-                    <SearchableSelect
-                        label='Выберите район:'
-                        value={filters.district}
-                        onChange={v => handleFilterChange('district', v)}
-                        options={[{ value: '', label: 'Все районы' }, ...districts.map(d => ({ value: d.id, label: d.name }))]}
-                        placeholder='Все районы'
-                        className='w-[240px]'
-                    />
+                    {!filters.highway && (
+                        <SearchableSelect
+                            label='Выберите район:'
+                            value={filters.district}
+                            onChange={v => handleFilterChange('district', v)}
+                            options={[{ value: '', label: 'Все районы' }, ...districts.map(d => ({ value: d.id, label: d.name }))]}
+                            placeholder='Все районы'
+                            className='w-[240px]'
+                        />
+                    )}
                     <SearchableSelect
                         label='Выберите шоссе:'
                         value={filters.highway}
@@ -455,18 +554,34 @@ function CatalogInner() {
                         </p>
                         <div className="flex gap-3 mt-auto">
                             <select
-                                value={landPlotSelected ? filters.land_area_max : filters.area_max}
+                                value={
+                                    (landPlotSelected ? filters.land_area_min : filters.area_min)
+                                        ? `>${landPlotSelected ? filters.land_area_min : filters.area_min}`
+                                        : (landPlotSelected ? filters.land_area_max : filters.area_max)
+                                }
                                 onChange={e => {
-                                    const key = landPlotSelected ? 'land_area_max' : 'area_max';
-                                    const next = { ...filters, [key]: e.target.value };
+                                    const val = e.target.value;
+                                    const minKey = landPlotSelected ? 'land_area_min' : 'area_min';
+                                    const maxKey = landPlotSelected ? 'land_area_max' : 'area_max';
+                                    const next = val.startsWith('>')
+                                        ? { ...filters, [minKey]: val.slice(1), [maxKey]: '' }
+                                        : { ...filters, [maxKey]: val, [minKey]: '' };
                                     setFilters(next); pushFilters(next);
                                 }}
                                 className="w-[130px] h-[48px] md:h-[56px] bg-[#F4F5F5] px-4 rounded-[10px] text-[14px] md:text-[16px] outline-none appearance-none cursor-pointer"
                             >
                                 <option value="">До</option>
-                                {landPlotSelected
-                                    ? [6, 10, 15, 20, 30, 50].map(v => <option key={v} value={v}>До {v} сот.</option>)
-                                    : [40, 60, 80, 100, 120, 150, 200].map(v => <option key={v} value={v}>До {v} м²</option>)}
+                                {landPlotSelected ? (
+                                    <>
+                                        {[6, 10, 15, 20, 30, 50].map(v => <option key={v} value={v}>До {v} сот.</option>)}
+                                        <option value=">50">более 50 сот.</option>
+                                    </>
+                                ) : (
+                                    <>
+                                        {[40, 60, 80, 100, 120, 150, 200].map(v => <option key={v} value={v}>До {v} м²</option>)}
+                                        <option value=">200">более 200 м²</option>
+                                    </>
+                                )}
                             </select>
                         </div>
                     </div>
@@ -507,31 +622,23 @@ function CatalogInner() {
                         onChange={handleCityChange}
                         className='w-full'
                     />
-                    <SearchableSelect
+                    <CategorySelect
                         label='Тип недвижимости:'
                         value={filters.category}
                         onChange={v => handleFilterChange('category', v)}
-                        options={[
-                            { value: '', label: 'Все типы' },
-                            ...categories.flatMap(cat => [
-                                { value: cat.id, label: cat.main_category },
-                                ...(cat.sub_category?.map(sub => ({
-                                    value: sub.id,
-                                    label: `  ${sub.sub_category}`,
-                                })) || []),
-                            ]),
-                        ]}
-                        placeholder='Все типы'
+                        categories={categories}
                         className='w-full'
                     />
-                    <SearchableSelect
-                        label='Выберите район:'
-                        value={filters.district}
-                        onChange={v => handleFilterChange('district', v)}
-                        options={[{ value: '', label: 'Все районы' }, ...districts.map(d => ({ value: d.id, label: d.name }))]}
-                        placeholder='Все районы'
-                        className='w-full'
-                    />
+                    {!filters.highway && (
+                        <SearchableSelect
+                            label='Выберите район:'
+                            value={filters.district}
+                            onChange={v => handleFilterChange('district', v)}
+                            options={[{ value: '', label: 'Все районы' }, ...districts.map(d => ({ value: d.id, label: d.name }))]}
+                            placeholder='Все районы'
+                            className='w-full'
+                        />
+                    )}
 
                     {/* Expandable section */}
                     <div
@@ -556,18 +663,34 @@ function CatalogInner() {
                                     {landPlotSelected ? 'Площадь участка, сот.:' : 'Площадь, м²:'}
                                 </p>
                                 <select
-                                    value={landPlotSelected ? filters.land_area_max : filters.area_max}
+                                    value={
+                                        (landPlotSelected ? filters.land_area_min : filters.area_min)
+                                            ? `>${landPlotSelected ? filters.land_area_min : filters.area_min}`
+                                            : (landPlotSelected ? filters.land_area_max : filters.area_max)
+                                    }
                                     onChange={e => {
-                                        const key = landPlotSelected ? 'land_area_max' : 'area_max';
-                                        const next = { ...filters, [key]: e.target.value };
+                                        const val = e.target.value;
+                                        const minKey = landPlotSelected ? 'land_area_min' : 'area_min';
+                                        const maxKey = landPlotSelected ? 'land_area_max' : 'area_max';
+                                        const next = val.startsWith('>')
+                                            ? { ...filters, [minKey]: val.slice(1), [maxKey]: '' }
+                                            : { ...filters, [maxKey]: val, [minKey]: '' };
                                         setFilters(next); pushFilters(next);
                                     }}
                                     className="w-full h-[48px] bg-[#F4F5F5] px-4 rounded-[10px] text-[14px] outline-none appearance-none cursor-pointer"
                                 >
                                     <option value="">До</option>
-                                    {landPlotSelected
-                                        ? [6, 10, 15, 20, 30, 50].map(v => <option key={v} value={v}>До {v} сот.</option>)
-                                        : [40, 60, 80, 100, 120, 150, 200].map(v => <option key={v} value={v}>До {v} м²</option>)}
+                                    {landPlotSelected ? (
+                                        <>
+                                            {[6, 10, 15, 20, 30, 50].map(v => <option key={v} value={v}>До {v} сот.</option>)}
+                                            <option value=">50">более 50 сот.</option>
+                                        </>
+                                    ) : (
+                                        <>
+                                            {[40, 60, 80, 100, 120, 150, 200].map(v => <option key={v} value={v}>До {v} м²</option>)}
+                                            <option value=">200">более 200 м²</option>
+                                        </>
+                                    )}
                                 </select>
                             </div>
                             {/* Стоимость */}

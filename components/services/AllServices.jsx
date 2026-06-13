@@ -5,6 +5,14 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { getData } from '@/lib/apiService';
 
+// Xizmatlar ko'rsatiladigan tartib (sarlavha bo'yicha kalit so'z mosligi)
+const SERVICE_ORDER = ['подбор', 'юридическ', 'сопровожден', 'строительств'];
+function serviceRank(title) {
+    const t = (title || '').toLowerCase();
+    const i = SERVICE_ORDER.findIndex(k => t.includes(k));
+    return i === -1 ? SERVICE_ORDER.length : i;
+}
+
 function SkeletonCard() {
     return (
         <div className="all-service-card" style={{
@@ -93,7 +101,7 @@ function ServiceCard({ service, delay, router }) {
                         }}
                         onClick={(e) => {
                             e.stopPropagation();
-                            router.push(`/services/${service.id}`);
+                            router.push(`/services/${service.id}?consult=1`);
                         }}
                     >
                         Получить консультацию
@@ -151,9 +159,11 @@ export default function AllServices() {
                 >
                     {loading
                         ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
-                        : services.map((service, i) => (
-                            <ServiceCard key={service.id} service={service} delay={i * 100} router={router} />
-                        ))
+                        : [...services]
+                            .sort((a, b) => serviceRank(a.title) - serviceRank(b.title))
+                            .map((service, i) => (
+                                <ServiceCard key={service.id} service={service} delay={i * 100} router={router} />
+                            ))
                     }
                 </div>
 

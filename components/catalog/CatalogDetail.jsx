@@ -878,7 +878,6 @@ function LandPlotDetail({ p }) {
    OTHER detail
    ═══════════════════════════════════════ */
 function OtherDetail({ p }) {
-    const rd = p.residential_details;
     const router = useRouter()
     const { isFavorite, toggleFavorite, isCompare, toggleCompare } = useFavoriteCompare()
     const favActive = isFavorite(p.id)
@@ -887,11 +886,12 @@ function OtherDetail({ p }) {
 
     function handleZayavka() { setModalOpen(true); }
     const allFields = [
-        ['Площадь', p.area ? `${p.area} м²` : null], ['Комнат', p.rooms], ['Этажей', p.floors],
+        ['Площадь', p.area ? `${p.area} м²` : null],
+        ['Площадь участка', p.land_area ? `${p.land_area} сот.` : null],
+        ['Комнат', p.rooms], ['Этажей', p.floors],
         ['Район', p.district?.name], ['От МКАД', p.distance_to_mkad_km ? `${p.distance_to_mkad_km} км` : null],
         ['Спален', p.bedrooms], ['Санузлов', p.bathrooms], ['Год постройки', p.year_built],
-        ['Материал стен', p.wall_material], ['Отделка', p.finishing], ['Шоссе', p.highway?.name],
-        ...(rd ? [['Застройщик', rd.developer], ['Срок сдачи', rd.completion_period_text], ['Класс жилья', rd.housing_class]] : []),
+        ['Тип дома', p.wall_material], ['Внешняя отделка', p.finishing], ['Шоссе', p.highway?.name],
     ];
     return (
         <div className="max-w-[1400px] mx-auto px-5 py-10">
@@ -920,7 +920,7 @@ function OtherDetail({ p }) {
                         {allFields.map(([label, value]) => <InfoRow key={label} label={label} value={value} />)}
                     </div>
                     <button onClick={handleZayavka} style={{ background: ORANGE, color: '#fff', border: 'none', borderRadius: 999, padding: '14px 32px', fontSize: 15, fontWeight: 500, cursor: 'pointer', width: '100%' }}>
-                        Оставить заявку
+                        Записаться на просмотр
                     </button>
                 </div>
             </div>
@@ -928,7 +928,12 @@ function OtherDetail({ p }) {
             <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap', marginTop: 48 }}>
                 <div style={{ flex: 1, minWidth: 240 }}>
                     <h2 style={{ fontSize: 20, fontWeight: 500, color: '#111827', marginBottom: 16 }}>Участок и локация</h2>
-                    <p style={{ fontSize: 14, color: '#374151', marginBottom: 16 }}>{p.settlement && `${p.settlement}, `}{p.address}</p>
+                    <div style={{ background: '#F9FAFB', borderRadius: 12, padding: '4px 16px', marginBottom: 16, maxWidth: 420 }}>
+                        <InfoRow label="Площадь участка" value={p.land_area ? `${p.land_area} сот.` : null} />
+                        <InfoRow label="Шоссе" value={p.highway?.name} />
+                        <InfoRow label="От МКАД" value={p.distance_to_mkad_km ? `${p.distance_to_mkad_km} км` : null} />
+                        <InfoRow label="Адрес" value={[p.settlement, p.address].filter(Boolean).join(', ') || null} />
+                    </div>
                     <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap' }}>
                         <div>
                             <p style={{ fontSize: 13, color: '#9CA3AF', marginBottom: 8 }}>Поблизости:</p>

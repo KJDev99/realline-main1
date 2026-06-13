@@ -177,6 +177,14 @@ export default function ServicesDetail() {
     const [modalOpen, setModalOpen] = useState(false);
 
     function handleZayavka() { setModalOpen(true); }
+
+    // «Получить консультацию» orqali kelganda formani darhol ochish (?consult=1)
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        if (params.get('consult') === '1') setModalOpen(true);
+    }, []);
+
     useEffect(() => {
         if (!id) return;
         getData(`/site/services/${id}/`)
