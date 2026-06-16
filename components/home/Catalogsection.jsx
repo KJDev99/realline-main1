@@ -293,6 +293,12 @@ function CategorySelect({ label, value, onChange, categories, className = '' }) 
                 {open && (
                     <div className='absolute z-50 w-full mt-1 bg-white border border-[#E5E5E5] rounded-[10px] shadow-md'
                         style={{ padding: '6px 0' }}>
+                        <style>{`
+                            .cat-submenu { position: absolute; top: 0; left: 100%; background:#fff; border-radius:10px; box-shadow:0 8px 32px rgba(0,0,0,0.12); min-width:200px; z-index:9999; padding:6px 0; border:1px solid #E5E5E5; }
+                            @media (max-width: 768px) {
+                                .cat-submenu { position: static; top:auto; left:auto; min-width:0; width:100%; box-shadow:none; border:none; border-left:2px solid #F05D22; border-radius:0; padding:2px 0 2px 10px; margin-top:2px; background:#FAFAFA; }
+                            }
+                        `}</style>
                         <div
                             onClick={() => select('')}
                             className='px-4 py-[10px] text-[14px] cursor-pointer hover:bg-[#F4F5F5] text-[#444]'
@@ -315,23 +321,19 @@ function CategorySelect({ label, value, onChange, categories, className = '' }) 
                                     >
                                         {cat.main_category}
                                         {hasSub && (
-                                            <svg
-                                                width='8' height='12' viewBox='0 0 8 12' fill='none'
-                                                style={{ flexShrink: 0 }}
+                                            <span
                                                 onClick={(e) => { e.stopPropagation(); setOpenSubId(p => p === cat.id ? null : cat.id); }}
+                                                style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 0 4px 10px', flexShrink: 0 }}
                                             >
-                                                <path d='M1 1l6 5-6 5' stroke='#9CA3AF' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round' />
-                                            </svg>
+                                                <svg width='8' height='12' viewBox='0 0 8 12' fill='none'
+                                                    style={{ transition: 'transform 0.2s', transform: openSubId === cat.id ? 'rotate(90deg)' : 'none' }}>
+                                                    <path d='M1 1l6 5-6 5' stroke='#9CA3AF' strokeWidth='1.5' strokeLinecap='round' strokeLinejoin='round' />
+                                                </svg>
+                                            </span>
                                         )}
                                     </div>
                                     {hasSub && openSubId === cat.id && (
-                                        <div style={{
-                                            position: 'absolute', top: 0, left: '100%',
-                                            background: '#fff', borderRadius: 10,
-                                            boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-                                            minWidth: 200, zIndex: 9999,
-                                            padding: '6px 0', border: '1px solid #E5E5E5',
-                                        }}>
+                                        <div className="cat-submenu">
                                             {cat.sub_category.map(sub => (
                                                 <div
                                                     key={sub.id}
