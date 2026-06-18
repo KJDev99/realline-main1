@@ -18,6 +18,26 @@ const CITIES = [
     { label: 'Санкт-Петербург', value: 'saint_petersburg' },
 ];
 
+// Загород: тип дома / внешняя отделка (значения совпадают с backend choices)
+const HOUSE_TYPE_OPTIONS = [
+    { value: 'brick', label: 'Кирпичный' },
+    { value: 'gas_concrete', label: 'Газобетон / пеноблок' },
+    { value: 'wood', label: 'Деревянный' },
+    { value: 'frame', label: 'Каркасный' },
+    { value: 'monolith', label: 'Монолитный' },
+    { value: 'combined', label: 'Комбинированный' },
+];
+
+const EXTERNAL_FINISHING_OPTIONS = [
+    { value: 'facade_plaster', label: 'Фасадная штукатурка' },
+    { value: 'siding_panels', label: 'Сайдинг и панели' },
+    { value: 'facade_tile', label: 'Фасадная плитка' },
+    { value: 'brick_stone', label: 'Кирпич / камень' },
+    { value: 'wood_cladding', label: 'Облицовка дерево' },
+];
+
+const MKAD_OPTIONS = [10, 20, 30, 50, 100];
+
 const PAGE_LIMIT = 9;
 const CITY_STORAGE_KEY = 'selected_city';
 
@@ -41,6 +61,8 @@ function parseParams(searchParams) {
         category_slug: searchParams.get('category_slug') || '',
         district: searchParams.get('district') || '',
         highway: searchParams.get('highway') || '',
+        house_type: searchParams.get('house_type') || '',
+        external_finishing: searchParams.get('external_finishing') || '',
         price_min: searchParams.get('price_min') || '',
         price_max: searchParams.get('price_max') || '',
         area_min: searchParams.get('area_min') || '',
@@ -69,6 +91,8 @@ function buildQuery(filters, offset) {
     if (filters.category_slug) params.set('category_slug', filters.category_slug);
     if (filters.district) params.set('district', filters.district);
     if (filters.highway) params.set('highway', filters.highway);
+    if (filters.house_type) params.set('house_type', filters.house_type);
+    if (filters.external_finishing) params.set('external_finishing', filters.external_finishing);
     if (filters.price_min) params.set('price_min', filters.price_min);
     if (filters.price_max) params.set('price_max', filters.price_max);
     if (filters.area_min) params.set('area_min', filters.area_min);
@@ -94,6 +118,8 @@ function buildURLParams(filters) {
     if (filters.category_slug) params.set('category_slug', filters.category_slug);
     if (filters.district) params.set('district', filters.district);
     if (filters.highway) params.set('highway', filters.highway);
+    if (filters.house_type) params.set('house_type', filters.house_type);
+    if (filters.external_finishing) params.set('external_finishing', filters.external_finishing);
     if (filters.price_min) params.set('price_min', filters.price_min);
     if (filters.price_max) params.set('price_max', filters.price_max);
     if (filters.area_min) params.set('area_min', filters.area_min);
@@ -121,10 +147,24 @@ function CardSkeleton() {
     );
 }
 
+// Kategoriyani id bo'yicha topadi — ham yuqori daraja, ham sub_category ichidan
+function findCategory(categories, selectedCategoryId) {
+    if (!selectedCategoryId) return null;
+    for (const c of categories) {
+        if (String(c.id) === String(selectedCategoryId)) return c;
+        const sub = c.sub_category?.find(s => String(s.id) === String(selectedCategoryId));
+        if (sub) return sub;
+    }
+    return null;
+}
+
 function isLandPlot(categories, selectedCategoryId) {
-    if (!selectedCategoryId) return false;
-    const cat = categories.find(c => String(c.id) === String(selectedCategoryId));
-    return cat?.slug === 'land_plot';
+    return findCategory(categories, selectedCategoryId)?.slug === 'land_plot';
+}
+
+function isSuburban(categories, selectedCategoryId) {
+    const slug = findCategory(categories, selectedCategoryId)?.slug;
+    return slug === 'dacha' || slug === 'cottage';
 }
 
 function SearchableSelect({ label, value, onChange, options, placeholder, className = '' }) {
@@ -481,6 +521,7 @@ function CatalogInner() {
         filters.area_min || filters.area_max ||
         filters.land_area_min || filters.land_area_max ||
         filters.distance_to_mkad_max ||
+        filters.house_type || filters.external_finishing ||
         BOOL_TAGS.some(({ key }) => filters[key]) ||
         filters.actual_offers;
 
@@ -498,7 +539,8 @@ function CatalogInner() {
     };
 
     const hasMore = properties.length < total;
-    const landPlotSelected = isLandPlot(categories, filters.category);
+    const suburbanSelected = isSuburban(categories, filters.category);
+    const landPlotSelected = isLandPlot(categories, filters.category) || suburbanSelected;
 
     // Don't render city-dependent selects until localStorage is read
     if (!cityReady) return null;
@@ -550,6 +592,34 @@ function CatalogInner() {
                         placeholder='Все шоссе'
                         className='w-[240px]'
                     />
+                    {suburbanSelected && (
+                        <>
+                            <SearchableSelect
+                                label='Тип дома:'
+                                value={filters.house_type}
+                                onChange={v => handleFilterChange('house_type', v)}
+                                options={[{ value: '', label: 'Любой' }, ...HOUSE_TYPE_OPTIONS]}
+                                placeholder='Любой'
+                                className='w-[240px]'
+                            />
+                            <SearchableSelect
+                                label='Внешняя отделка:'
+                                value={filters.external_finishing}
+                                onChange={v => handleFilterChange('external_finishing', v)}
+                                options={[{ value: '', label: 'Любая' }, ...EXTERNAL_FINISHING_OPTIONS]}
+                                placeholder='Любая'
+                                className='w-[240px]'
+                            />
+                            <SearchableSelect
+                                label='От МКАД:'
+                                value={filters.distance_to_mkad_max}
+                                onChange={v => handleFilterChange('distance_to_mkad_max', v)}
+                                options={[{ value: '', label: 'Любое' }, ...MKAD_OPTIONS.map(v => ({ value: v, label: `До ${v} км` }))]}
+                                placeholder='Любое'
+                                className='w-[240px]'
+                            />
+                        </>
+                    )}
                     <div className="hidden lg:flex flex-col w-auto">
                         <p className="text-[13px] md:text-[14px] mb-2">
                             {landPlotSelected ? 'Площадь участка, сот.:' : 'Площадь, м²:'}
@@ -659,6 +729,34 @@ function CatalogInner() {
                                 placeholder='Все шоссе'
                                 className='w-full'
                             />
+                            {suburbanSelected && (
+                                <>
+                                    <SearchableSelect
+                                        label='Тип дома:'
+                                        value={filters.house_type}
+                                        onChange={v => handleFilterChange('house_type', v)}
+                                        options={[{ value: '', label: 'Любой' }, ...HOUSE_TYPE_OPTIONS]}
+                                        placeholder='Любой'
+                                        className='w-full'
+                                    />
+                                    <SearchableSelect
+                                        label='Внешняя отделка:'
+                                        value={filters.external_finishing}
+                                        onChange={v => handleFilterChange('external_finishing', v)}
+                                        options={[{ value: '', label: 'Любая' }, ...EXTERNAL_FINISHING_OPTIONS]}
+                                        placeholder='Любая'
+                                        className='w-full'
+                                    />
+                                    <SearchableSelect
+                                        label='От МКАД:'
+                                        value={filters.distance_to_mkad_max}
+                                        onChange={v => handleFilterChange('distance_to_mkad_max', v)}
+                                        options={[{ value: '', label: 'Любое' }, ...MKAD_OPTIONS.map(v => ({ value: v, label: `До ${v} км` }))]}
+                                        placeholder='Любое'
+                                        className='w-full'
+                                    />
+                                </>
+                            )}
                             {/* Площадь */}
                             <div className="flex flex-col gap-2">
                                 <p className="text-[13px]">
