@@ -232,6 +232,16 @@ export default function Navbar() {
         );
     }, [selectedCity, cityHydrated]);
 
+    // Boshqa joyda (masalan katalogda) shahar almashtirilsa — shapkani sinxronlash
+    useEffect(() => {
+        const handler = (e) => {
+            const v = e.detail?.value;
+            setSelectedCity((prev) => (prev.value === v ? prev : CITIES.find((c) => c.value === v) || prev));
+        };
+        window.addEventListener(SELECTED_CITY_EVENT, handler);
+        return () => window.removeEventListener(SELECTED_CITY_EVENT, handler);
+    }, []);
+
     // YANGI
     const handleCitySelect = (city) => {
         setSelectedCity(city);

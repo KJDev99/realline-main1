@@ -40,6 +40,7 @@ const MKAD_OPTIONS = [10, 20, 30, 50, 100];
 
 const PAGE_LIMIT = 9;
 const CITY_STORAGE_KEY = 'selected_city';
+const SELECTED_CITY_EVENT = 'selected-city-changed';
 
 function getStoredCity() {
     try {
@@ -424,6 +425,10 @@ function CatalogInner() {
     const initFilters = parseParams(searchParams);
     const [filters, setFilters] = useState(initFilters);
     const offsetRef = useRef(initFilters.offset);
+    const filtersRef = useRef(filters);
+    filtersRef.current = filters;
+    const selectedCityRef = useRef(selectedCity);
+    selectedCityRef.current = selectedCity;
 
     // Filtered by current city
     const districts = allDistricts.filter(d => d.region === selectedCity);
@@ -436,39 +441,62 @@ function CatalogInner() {
         setCityReady(true);
     }, []);
 
+    // Shapka (Navbar) da shahar almashtirilsa — katalogni shu shaharga moslash
+    useEffect(() => {
+        const handler = (e) => {
+            const v = e.detail?.value;
+            if (v !== 'moscow' && v !== 'saint_petersburg') return;
+            if (v === selectedCityRef.current) return;
+            setSelectedCity(v);
+            setStoredCity(v);
+            const next = { ...filtersRef.current, district: '', highway: '' };
+            setFilters(next);
+            router.replace(`${pathname}?${buildURLParams(next).toString()}`, { scroll: false });
+        };
+        window.addEventListener(SELECTED_CITY_EVENT, handler);
+        return () => window.removeEventListener(SELECTED_CITY_EVENT, handler);
+    }, [pathname, router]);
+
+    // Категории не зависят от города
     useEffect(() => {
         getData('accounts/catalog/categories/').then(data => {
             const sorted = (Array.isArray(data) ? data : data.results ?? []).sort((a, b) => a.sort_order - b.sort_order);
             setCategories(sorted);
         }).catch(() => { });
-        getData('accounts/catalog/districts/').then(data => {
+    }, []); // eslint-disable-line
+
+    // Районы и шоссе зависят от выбранного города
+    useEffect(() => {
+        if (!cityReady) return;
+        getData(`accounts/catalog/districts/?region=${selectedCity}`).then(data => {
             setAllDistricts(Array.isArray(data) ? data : data.results ?? []);
         }).catch(() => { });
-        getData('accounts/catalog/highways/').then(data => {
+        getData(`accounts/catalog/highways/?region=${selectedCity}`).then(data => {
             setAllHighways(Array.isArray(data) ? data : data.results ?? []);
         }).catch(() => { });
-    }, []); // eslint-disable-line
+    }, [selectedCity, cityReady]); // eslint-disable-line
 
     const fetchProperties = useCallback(async (currentFilters, offset, append = false) => {
         const setter = append ? setLoadingMore : setLoading;
         setter(true); setError(null);
         try {
             const qs = buildQuery(currentFilters, offset);
-            const data = await getData(`accounts/catalog/properties/?${qs}`);
+            const data = await getData(`accounts/catalog/properties/?${qs}&region=${selectedCity}`);
             const results = data?.results || [];
             setTotal(data?.count ?? 0);
             setProperties(prev => append ? [...prev, ...results] : results);
         } catch (e) {
             setError(e?.message || 'Ошибка загрузки');
         } finally { setter(false); }
-    }, [getData]);
+    }, [getData, selectedCity]);
 
     useEffect(() => {
+        if (!cityReady) return;
         const parsed = parseParams(searchParams);
         setFilters(parsed);
         offsetRef.current = parsed.offset;
         fetchProperties(parsed, 0, false);
-    }, [searchParams]); // eslint-disable-line
+    }, [searchParams, selectedCity, cityReady]); // eslint-disable-line
 
     // Measure expanded content height for animation
     useEffect(() => {
@@ -501,9 +529,11 @@ function CatalogInner() {
     const handleCityChange = (city) => {
         setSelectedCity(city);
         setStoredCity(city);
+        document.cookie = `selected_city=${city};path=/;max-age=31536000`;
         const next = { ...filters, district: '', highway: '' };
         setFilters(next);
         pushFilters(next);
+        window.dispatchEvent(new CustomEvent(SELECTED_CITY_EVENT, { detail: { value: city } }));
     };
 
     const toggleTag = (key) => handleFilterChange(key, !filters[key]);
