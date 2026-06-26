@@ -83,7 +83,7 @@ function ServiceCard({ service, delay, router }) {
                         }}
                         onClick={(e) => {
                             e.stopPropagation();
-                            router.push(`/services/${service.id}`);
+                            router.push(`/services/${service.id}?consult=1`);
                         }}
                     >
                         Получить консультацию

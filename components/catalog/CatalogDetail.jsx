@@ -557,7 +557,7 @@ function UnitCard({ unit }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ position: 'relative', borderRadius: 16, overflow: 'hidden', aspectRatio: '1 / 0.75' }} onMouseLeave={() => setActiveSlide(0)}>
                 {images.map((src, i) => (
-                    <Image key={i} src={typeof src === 'string' ? src : src.image ?? fallback} alt={roomLabel} fill className="object-cover"
+                    <Image key={i} src={typeof src === 'string' ? src : src.image ?? fallback} alt={roomLabel} fill className="object-contain"
                         style={{ opacity: i === activeSlide ? 1 : 0, transition: 'opacity 0.3s' }} sizes="(max-width: 768px) 100vw, 33vw" />
                 ))}
                 {images.length > 1 && (
