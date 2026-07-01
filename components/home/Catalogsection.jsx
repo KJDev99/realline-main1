@@ -556,12 +556,9 @@ function CatalogInner() {
         filters.actual_offers;
 
     const handleLoadMore = async () => {
-        const nextOffset = properties.length;
-        offsetRef.current = nextOffset;
-        const params = new URLSearchParams(searchParams.toString());
-        params.set('offset', nextOffset);
-        router.replace(`${pathname}?${params.toString()}`);
-        await fetchProperties(filters, nextOffset, true);
+        // «Показать ещё» — faqat keyingi obyektlarni ro'yxat oxiriga qo'shadi (next).
+        // URL o'zgarmaydi → sahifa tepaga sakramaydi va birinchi obyektlar qayta yuklanmaydi.
+        await fetchProperties(filters, properties.length, true);
     };
 
     const handleCardClick = (property) => {
