@@ -24,6 +24,11 @@ const CITIES = [
 
 const CITY_STORAGE_KEY = 'selected_city';
 const SELECTED_CITY_EVENT = 'selected-city-changed';
+// Har bir shahar o'z sayti (subdomeni) — tanlanganda o'sha domenga o'tadi
+const CITY_URLS = {
+    moscow: 'https://reallain.ru/',
+    saint_petersburg: 'https://saintpetersburg.reallain.ru/',
+};
 const ORANGE = 'linear-gradient(90deg, #F05D22 0%, #DF3505 35.22%, #F13F03 68.86%, #F94A0B 100%)';
 const ORANGE_COLOR = '#F05D22';
 
@@ -469,14 +474,18 @@ export default function Navbar() {
                                 }}
                             >
                                 {CITIES.map((city) => (
-                                    <button
+                                    <a
                                         key={city.value}
-                                        onClick={() => handleCitySelect(city)}
+                                        href={CITY_URLS[city.value]}
+                                        onClick={(e) => {
+                                            if (typeof window !== 'undefined' && window.location.hostname === new URL(CITY_URLS[city.value]).hostname) e.preventDefault();
+                                            setCityDropdownOpen(false);
+                                        }}
                                         style={{
                                             display: 'flex', alignItems: 'center', gap: 8,
                                             width: '100%', textAlign: 'left',
                                             padding: '10px 16px', fontSize: 14,
-                                            color: '#141111',
+                                            color: '#141111', textDecoration: 'none',
                                             fontWeight: selectedCity.value === city.value ? 600 : 400,
                                             background: 'none', border: 'none', cursor: 'pointer',
                                         }}
@@ -485,7 +494,7 @@ export default function Navbar() {
                                     >
                                         <FiMapPin size={13} color={selectedCity.value === city.value ? '#F05D22' : '#9CA3AF'} />
                                         {city.label}
-                                    </button>
+                                    </a>
                                 ))}
                             </div>
                         )}
@@ -613,9 +622,9 @@ export default function Navbar() {
                     {/* Mobile bottom actions - flex-shrink-0 qo'shildi */}
                     <div className="p-6 flex flex-col gap-3 flex-shrink-0">
                         {/* City selector mobile */}
-                        <div className="relative">
+                        {/* <div className="relative">
                             <button
-                                onClick={() => setCityDropdownOpen((prev) => !prev)}
+                                onClick={() => setCityDropdownOpen(true)}
                                 className="flex items-center gap-2 text-white text-sm bg-white/10 rounded-full px-4 py-3 w-full hover:bg-white/20 transition border border-white/20"
                             >
                                 <FiMapPin size={15} />
@@ -632,27 +641,57 @@ export default function Navbar() {
 
                             {cityDropdownOpen && (
                                 <div
-                                    className="absolute bottom-full left-0 right-0 mb-2 rounded-xl overflow-hidden border border-white/10"
-                                    style={{ background: '#2a2a2a', zIndex: 60 }}
+                                    // onMouseDown={(e) => e.stopPropagation()}
+                                    className="mt-2 rounded-xl overflow-hidden border border-white/10"
+                                    style={{ background: '#2a2a2a' }}
                                 >
                                     {CITIES.map((city) => (
-                                        <button
+                                        <a
                                             key={city.value}
-                                            onClick={() => handleCitySelect(city)}
-                                            className="flex items-center gap-3 w-full text-left px-4 py-3 text-[15px] hover:bg-white/10 transition cursor-pointer"
+                                            href={CITY_URLS[city.value]}
+                                            onClick={(e) => {
+                                                console.log('asd')
+                                            }}
+                                            className="flex items-center gap-3 w-full text-left px-4 py-3 text-[15px] hover:bg-white/10 transition cursor-pointer no-underline"
                                             style={{
                                                 color: selectedCity.value === city.value ? '#F05D22' : '#e5e7eb',
                                                 fontWeight: selectedCity.value === city.value ? 600 : 400,
-                                                cursor: 'pointer'
+                                                cursor: 'pointer', textDecoration: 'none',
                                             }}
                                         >
                                             <FiMapPin size={14} color={selectedCity.value === city.value ? '#F05D22' : '#9CA3AF'} />
                                             {city.label}
-                                        </button>
+                                        </a>
                                     ))}
                                 </div>
                             )}
-                        </div>
+                          
+                        </div> */}
+
+                        <a
+                            href=''
+                            className="flex rounded-full items-center gap-3 w-full text-left px-4 py-3 text-[15px] hover:bg-white/10 transition cursor-pointer no-underline"
+                            style={{
+                                color: '#F05D22',
+                                fontWeight: 600,
+                                cursor: 'pointer', textDecoration: 'none',
+                            }}
+                        >
+                            <FiMapPin size={14} color={'#F05D22'} />
+                            Москва
+                        </a>
+                        <a
+                            href='https://saintpetersburg.reallain.ru/'
+                            className="flex rounded-full items-center gap-3 w-full text-left px-4 py-3 text-[15px] hover:bg-white/10 transition cursor-pointer no-underline"
+                            style={{
+                                color: '#e5e7eb',
+                                fontWeight: 400,
+                                cursor: 'pointer', textDecoration: 'none',
+                            }}
+                        >
+                            <FiMapPin size={14} color={'#9CA3AF'} />
+                            Санкт-Петербург
+                        </a>
 
                         <div className="flex gap-2">
                             <button className="bg-white text-black font-medium text-[14px] px-5 py-3 rounded-full hover:bg-white/90 transition flex-1 cursor-pointer">

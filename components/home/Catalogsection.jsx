@@ -41,6 +41,11 @@ const MKAD_OPTIONS = [10, 20, 30, 50, 100];
 const PAGE_LIMIT = 9;
 const CITY_STORAGE_KEY = 'selected_city';
 const SELECTED_CITY_EVENT = 'selected-city-changed';
+// Har bir shahar o'z sayti (subdomeni) — tanlanganda o'sha domenga o'tadi
+const CITY_URLS = {
+    moscow: 'https://reallain.ru/',
+    saint_petersburg: 'https://saintpetersburg.reallain.ru/',
+};
 
 function getStoredCity() {
     try {
@@ -274,14 +279,18 @@ function CitySelect({ label, value, onChange, className = '' }) {
                 {open && (
                     <div className='absolute z-50 w-full mt-1 bg-white border border-[#E5E5E5] rounded-[10px] shadow-md overflow-hidden'>
                         {CITIES.map(city => (
-                            <div
+                            <a
                                 key={city.value}
-                                onClick={() => { onChange(city.value); setOpen(false); }}
-                                className={`px-4 py-[10px] text-[14px] cursor-pointer hover:bg-[#F4F5F5]
+                                href={CITY_URLS[city.value]}
+                                onClick={(e) => {
+                                    if (typeof window !== 'undefined' && window.location.hostname === new URL(CITY_URLS[city.value]).hostname) e.preventDefault();
+                                    setOpen(false);
+                                }}
+                                className={`block no-underline px-4 py-[10px] text-[14px] cursor-pointer hover:bg-[#F4F5F5]
                                     ${city.value === value ? 'font-semibold text-[#141111]' : 'text-[#444]'}`}
                             >
                                 {city.label}
-                            </div>
+                            </a>
                         ))}
                     </div>
                 )}

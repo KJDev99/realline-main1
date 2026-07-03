@@ -35,6 +35,11 @@ const CITY_TO_REGION = {
     moscow: 1,
     saint_petersburg: 2,
 };
+// Har bir shahar o'z sayti (subdomeni) — tanlanganda o'sha domenga o'tadi
+const CITY_URLS = {
+    moscow: 'https://reallain.ru/',
+    saint_petersburg: 'https://saintpetersburg.reallain.ru/',
+};
 
 const ORANGE = 'linear-gradient(90deg, #F05D22 0%, #DF3505 35.22%, #F13F03 68.86%, #F94A0B 100%)';
 const ORANGE_COLOR = '#F05D22';
@@ -590,10 +595,11 @@ export default function Header() {
                                 }}
                             >
                                 {CITIES.map((city) => (
-                                    <button
+                                    <a
                                         key={city.value}
-                                        onClick={() => {
-                                            setSelectedCity(city);
+                                        href={CITY_URLS[city.value]}
+                                        onClick={(e) => {
+                                            if (typeof window !== 'undefined' && window.location.hostname === new URL(CITY_URLS[city.value]).hostname) e.preventDefault();
                                             setCityDropdownOpen(false);
                                         }}
                                         style={{
@@ -605,6 +611,7 @@ export default function Header() {
                                             padding: '10px 16px',
                                             fontSize: 14,
                                             color: '#141111',
+                                            textDecoration: 'none',
                                             fontWeight: selectedCity.value === city.value ? 600 : 400,
                                             background: 'none',
                                             border: 'none',
@@ -615,7 +622,7 @@ export default function Header() {
                                     >
                                         <FiMapPin size={13} color={selectedCity.value === city.value ? '#F05D22' : '#9CA3AF'} />
                                         {city.label}
-                                    </button>
+                                    </a>
                                 ))}
                             </div>
                         )}
@@ -796,49 +803,31 @@ export default function Header() {
 
                     {/* Mobile bottom actions */}
                     <div className="p-6 flex flex-col gap-3 flex-shrink-0">
-                        {/* City selector — mobile */}
-                        <div className="relative">
-                            <button
-                                onClick={() => setCityDropdownOpen((prev) => !prev)}
-                                className="flex items-center gap-2 text-white text-sm bg-white/10 rounded-full px-4 py-3 w-full hover:bg-white/20 transition border border-white/20"
-                            >
-                                <FiMapPin size={15} />
-                                {selectedCity.label}
-                                <FiChevronDown
-                                    size={14}
-                                    className="ml-auto"
-                                    style={{
-                                        transition: 'transform 0.2s',
-                                        transform: cityDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)'
-                                    }}
-                                />
-                            </button>
-
-                            {cityDropdownOpen && (
-                                <div
-                                    className="absolute bottom-full left-0 right-0 mb-2 rounded-xl overflow-hidden border border-white/10"
-                                    style={{ background: '#2a2a2a', zIndex: 60 }}
-                                >
-                                    {CITIES.map((city) => (
-                                        <button
-                                            key={city.value}
-                                            onClick={() => {
-                                                setSelectedCity(city);
-                                                setCityDropdownOpen(false);
-                                            }}
-                                            className="flex items-center gap-3 w-full text-left px-4 py-3 text-[15px] hover:bg-white/10 transition cursor-pointer"
-                                            style={{
-                                                color: selectedCity.value === city.value ? '#F05D22' : '#e5e7eb',
-                                                fontWeight: selectedCity.value === city.value ? 600 : 400,
-                                            }}
-                                        >
-                                            <FiMapPin size={14} color={selectedCity.value === city.value ? '#F05D22' : '#9CA3AF'} />
-                                            {city.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        {/* City selector — mobile (soddalashtirildi: to'g'ridan-to'g'ri linklar) */}
+                        <a
+                            href=''
+                            className="flex rounded-full items-center gap-3 w-full text-left px-4 py-3 text-[15px] hover:bg-white/10 transition cursor-pointer no-underline"
+                            style={{
+                                color: '#F05D22',
+                                fontWeight: 600,
+                                cursor: 'pointer', textDecoration: 'none',
+                            }}
+                        >
+                            <FiMapPin size={14} color={'#F05D22'} />
+                            Москва
+                        </a>
+                        <a
+                            href='https://saintpetersburg.reallain.ru/'
+                            className="flex rounded-full items-center gap-3 w-full text-left px-4 py-3 text-[15px] hover:bg-white/10 transition cursor-pointer no-underline"
+                            style={{
+                                color: '#e5e7eb',
+                                fontWeight: 400,
+                                cursor: 'pointer', textDecoration: 'none',
+                            }}
+                        >
+                            <FiMapPin size={14} color={'#9CA3AF'} />
+                            Санкт-Петербург
+                        </a>
 
                         <div className="flex gap-2">
                             {/* ✅ Mobile: #contact o'rniga modal */}
