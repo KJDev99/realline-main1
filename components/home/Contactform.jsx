@@ -117,7 +117,7 @@ export default function ContactForm() {
                         </div>
                         <span className="text-white/60 text-[12px] md:text-[14px] leading-[1.4] select-none">
                             Я даю согласие на обработку моих персональных данных в соответствии с{' '}
-                            <Link href="/privacy" className="underline" onClick={e => e.stopPropagation()}>
+                            <Link href="/politika.docx" target="_blank" rel="noopener noreferrer" className="underline" onClick={e => e.stopPropagation()}>
                                 Политикой
                             </Link>
                         </span>

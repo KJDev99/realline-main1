@@ -15,7 +15,7 @@ export default function Footer() {
                 </div>
                 <div className='max-md:mb-4 max-md:hidden flex flex-col gap-1.5 mt-2'>
                     <span className='font-normal text-[14px] leading-[100%] tracking-[0%] align-middle text-[rgba(255,255,255,0.35)] mt-[15px]'>© 2026 Все права защищены</span>
-                    <Link href="/privacy" className='font-normal text-[14px] leading-[100%] tracking-[0%] align-middle text-[rgba(255,255,255,0.35)] mt-[15px]'>
+                    <Link href="/politika.docx" target="_blank" rel="noopener noreferrer" className='font-normal text-[14px] leading-[100%] tracking-[0%] align-middle text-[rgba(255,255,255,0.35)] mt-[15px]'>
                         Политика конфиденциальности
                     </Link>
                     <span className='font-normal text-[14px] leading-[100%] tracking-[0%] align-middle mt-[15px] text-[rgba(255,255,255,0.35)]'>Разработано в Usertech</span>
@@ -109,7 +109,7 @@ export default function Footer() {
             </div>
             <div className='max-md:mb-4 md:hidden max-md:flex flex-col gap-1.5 mt-2' >
                 <span className='font-normal text-[14px] leading-[100%] tracking-[0%] align-middle text-[rgba(255,255,255,0.35)] mt-[15px]'>© 2026 Все права защищены</span>
-                <Link href="/privacy" className='font-normal text-[14px] leading-[100%] tracking-[0%] align-middle text-[rgba(255,255,255,0.35)] mt-[15px]'>
+                <Link href="/politika.docx" target="_blank" rel="noopener noreferrer" className='font-normal text-[14px] leading-[100%] tracking-[0%] align-middle text-[rgba(255,255,255,0.35)] mt-[15px]'>
                     Политика конфиденциальности
                 </Link>
                 <span className='font-normal text-[14px] leading-[100%] tracking-[0%] align-middle mt-[15px] text-[rgba(255,255,255,0.35)]'>Разработано в Usertech</span>

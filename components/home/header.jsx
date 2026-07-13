@@ -164,7 +164,7 @@ function ZayavkaModal({ open, onClose }) {
                         </div>
                         <span style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.5, userSelect: 'none' }}>
                             Я даю согласие на обработку персональных данных в соответствии с{' '}
-                            <a href="/privacy" style={{ color: ORANGE_COLOR, textDecoration: 'underline' }} onClick={e => e.stopPropagation()}>
+                            <a href="/politika.docx" target="_blank" rel="noopener noreferrer" style={{ color: ORANGE_COLOR, textDecoration: 'underline' }} onClick={e => e.stopPropagation()}>
                                 Политикой
                             </a>
                         </span>

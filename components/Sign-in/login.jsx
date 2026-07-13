@@ -144,7 +144,7 @@ export default function Login() {
                                     )}
                                 </div>
                                 <p className="text-[13px] lg:text-[14px] leading-[140%] text-white/80">
-                                    Я даю согласие на обработку моих персональных данных в соответствии с Политикой обработки персональных данных
+                                    Я даю согласие на обработку моих персональных данных в соответствии с <a href="/politika.docx" target="_blank" rel="noopener noreferrer" className="underline" onClick={e => e.stopPropagation()}>Политикой обработки персональных данных</a>
                                 </p>
                             </motion.div>
 
