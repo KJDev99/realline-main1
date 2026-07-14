@@ -19,13 +19,22 @@ export default function PropertyCard({ property, onFavoriteRemoved, onCompareRem
     const favActive = isFavorite(id)
     const cmpActive = isCompare(id)
 
+    // ── Yon strelkalar bilan varaqlash (pastki nuqtalarsiz ham) ──
+    const goPrev = (e) => {
+        e.stopPropagation()
+        setActiveSlide(i => (i - 1 + images.length) % images.length)
+    }
+    const goNext = (e) => {
+        e.stopPropagation()
+        setActiveSlide(i => (i + 1) % images.length)
+    }
+
     return (
         <div className="flex flex-col gap-3 select-none">
             {/* ── Image block ── */}
             <div
-                className="relative rounded-2xl overflow-hidden"
+                className="relative rounded-2xl overflow-hidden bg-[#F4F5F5]"
                 style={{ aspectRatio: '1 / 0.75' }}
-                onMouseLeave={() => setActiveSlide(0)}  // ✅ Container darajasida
             >
                 {images.map((src, i) => (
                     <Image
@@ -33,22 +42,32 @@ export default function PropertyCard({ property, onFavoriteRemoved, onCompareRem
                         src={typeof src === 'string' ? src : src.image ?? '/sec2.png'}
                         alt={name}
                         fill
-                        className={`object-cover transition-opacity duration-300 ${i === activeSlide ? 'opacity-100' : 'opacity-0'}`}
+                        className={`object-contain transition-opacity duration-300 ${i === activeSlide ? 'opacity-100' : 'opacity-0'}`}
                     />
                 ))}
 
-                {/* Hover zones */}
+                {/* Yon strelkalar — rasmlarni pastki navigatsiyasiz varaqlash */}
                 {images.length > 1 && (
-                    <div className="absolute inset-0 flex z-10">
-                        {images.map((_, i) => (
-                            <div
-                                key={i}
-                                className="flex-1 h-full"
-                                onMouseEnter={() => setActiveSlide(i)}
-                            // ✅ onMouseLeave bu yerdan olib tashlandi
-                            />
-                        ))}
-                    </div>
+                    <>
+                        <button
+                            onClick={goPrev}
+                            aria-label="Предыдущее фото"
+                            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/85 flex items-center justify-center shadow hover:bg-white transition-colors"
+                        >
+                            <svg width="8" height="14" viewBox="0 0 8 14" fill="none">
+                                <path d="M7 1L1 7l6 6" stroke="#141111" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                        </button>
+                        <button
+                            onClick={goNext}
+                            aria-label="Следующее фото"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/85 flex items-center justify-center shadow hover:bg-white transition-colors"
+                        >
+                            <svg width="8" height="14" viewBox="0 0 8 14" fill="none">
+                                <path d="M1 1l6 6-6 6" stroke="#141111" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                        </button>
+                    </>
                 )}
 
                 {/* Action buttons */}
@@ -99,19 +118,17 @@ export default function PropertyCard({ property, onFavoriteRemoved, onCompareRem
 
             {/* ── Info ── */}
             <div className="flex items-baseline justify-between gap-2 px-0.5">
-                <span className="font-medium text-[20px] leading-[100%] line-clamp-1">{name}</span>
-                <span className="font-medium text-[20px] leading-[100%] whitespace-nowrap">
+                <span className="font-medium text-[20px] leading-tight">{name}</span>
+                <span className="font-medium text-[20px] leading-[100%] whitespace-nowrap shrink-0">
                     {formatPrice(price)} ₽
                 </span>
             </div>
 
             <div className="flex flex-col gap-[10px] px-0.5">
                 <div className="flex gap-4 flex-wrap">
-                    {district && (
-                        <span className="text-gray-400 text-xs flex items-center gap-1">
-                            Район: <span className="text-black font-normal text-[14px] leading-[100%]">{district.name}</span>
-                        </span>
-                    )}
+                    <span className="text-gray-400 text-xs flex items-center gap-1">
+                        Район: <span className="text-black font-normal text-[14px] leading-[100%]">{district?.name || '—'}</span>
+                    </span>
                     {highway && (
                         <span className="text-gray-400 text-xs flex items-center gap-1">
                             Шоссе: <span className="text-black font-normal text-[14px] leading-[100%]">{highway.name}</span>

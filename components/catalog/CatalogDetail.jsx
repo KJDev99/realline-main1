@@ -61,22 +61,41 @@ function Gallery({ images }) {
                 marginBottom: 10,
                 display: "flex",
                 alignItems: "center",
+                justifyContent: "center",
+                background: "#F4F5F5",
             }}>
                 <Image
                     quality={90}
                     src={getImgSrc(imgs[active])}
                     alt="property"
-                    width={0}
-                    height={0}
+                    fill
                     sizes="100vw"
                     style={{
-                        width: "100%",
-                        height: "auto",
+                        objectFit: "contain",   // rasm butunligicha ko'rinsin, kesilmasin
                         borderRadius: 16,
-                        display: "block"
                     }}
                     priority
                 />
+                {imgs.length > 1 && (
+                    <>
+                        <button
+                            type="button"
+                            aria-label="Предыдущее фото"
+                            onClick={() => setActive(i => (i - 1 + imgs.length) % imgs.length)}
+                            style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", zIndex: 10, width: 40, height: 40, borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.85)", boxShadow: "0 2px 8px rgba(0,0,0,0.15)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                        >
+                            <svg width="9" height="16" viewBox="0 0 9 16" fill="none"><path d="M8 1L1 8l7 7" stroke="#141111" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                        </button>
+                        <button
+                            type="button"
+                            aria-label="Следующее фото"
+                            onClick={() => setActive(i => (i + 1) % imgs.length)}
+                            style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", zIndex: 10, width: 40, height: 40, borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.85)", boxShadow: "0 2px 8px rgba(0,0,0,0.15)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                        >
+                            <svg width="9" height="16" viewBox="0 0 9 16" fill="none"><path d="M1 1l7 7-7 7" stroke="#141111" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                        </button>
+                    </>
+                )}
             </div>
             {imgs.length > 1 && (
                 <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 6, scrollbarWidth: "thin" }}>
@@ -585,7 +604,7 @@ function UnitCard({ unit }) {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, padding: '0 2px' }}>
-                <span style={{ fontWeight: 500, fontSize: 18, lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{roomLabel}</span>
+                <span style={{ fontWeight: 500, fontSize: 18, lineHeight: 1.15 }}>{roomLabel}</span>
                 <span style={{ fontWeight: 500, fontSize: 16, whiteSpace: 'nowrap', color: '#111827' }}>от {formatPrice(unit.price)} ₽</span>
             </div>
 
