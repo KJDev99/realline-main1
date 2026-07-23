@@ -73,19 +73,19 @@ export default function Footer() {
             {/* COL 4 — Contacts */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <a
-                    href="tel:+71234567890"
+                    href="tel:+79032048154"
                     style={{ color: '#fff', fontSize: 20, fontWeight: 700, textDecoration: 'none', marginBottom: 4 }}
                 >
-                    +7 (123) 456 78 90
+                    +7 (903) 204-81-54
                 </a>
                 <a
-                    href="mailto:realline@info.ru"
+                    href="mailto:info@reallain.ru"
                     className='font-normal text-[16px] leading-[100%] tracking-[0%] align-middle text-white mb-[10px]'
                 >
-                    realline@info.ru
+                    info@reallain.ru
                 </a>
                 <span className='font-normal text-[16px] leading-[100%] tracking-[0%] align-middle text-white'>
-                    г. Москва, ул. Улица, д.1, офис 1
+                    17-й проезд Марьиной Рощи, 4к1
                 </span>
 
                 {/* Social buttons */}

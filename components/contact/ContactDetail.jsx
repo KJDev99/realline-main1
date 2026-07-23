@@ -1,8 +1,15 @@
 'use client';
 
-import { getData } from '@/lib/apiService';
 import dynamic from 'next/dynamic';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+
+// ── Kontaktlar (frontda qattiq yozilgan, backenddan olinmaydi) — Москва ──
+const CONTACTS = {
+    phone: '+7 (903) 204-81-54',
+    email: 'info@reallain.ru',
+    address: '17-й проезд Марьиной Рощи, 4к1',
+};
+const GEO = { latitude: 55.7986, longitude: 37.6103 };
 
 const ContactMap = dynamic(() => import('./ContactMap'), {
     ssr: false,
@@ -22,22 +29,11 @@ function SkeletonLine({ w = '60%', h = 16, mb = 8 }) {
 }
 
 export default function ContactDetail() {
-    const [contacts, setContacts] = useState(null);
-    const [geo, setGeo] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const contacts = CONTACTS;
+    const loading = false;
 
-    useEffect(() => {
-        Promise.all([
-            getData('/site/contacts/').catch(() => null),
-            getData('/site/geo/').catch(() => null),
-        ]).then(([contactsData, geoData]) => {
-            setContacts(contactsData);
-            setGeo(geoData);
-        }).finally(() => setLoading(false));
-    }, []);
-
-    const lat = geo?.latitude ?? 55.7558;
-    const lng = geo?.longitude ?? 37.6173;
+    const lat = GEO.latitude;
+    const lng = GEO.longitude;
 
     return (
         <>
